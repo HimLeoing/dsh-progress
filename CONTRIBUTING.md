@@ -9,7 +9,7 @@ npm pack --dry-run
 
 ## Changes
 
-Keep changes scoped to task progress. Host updates and restart controls belong in the separate `dsh-base` plugin.
+Keep changes scoped to task progress.
 
 For a bug fix, add a deterministic regression at the seam that exhibits the problem. Use fake providers and controlled clocks instead of paid model calls. Cover main-turn and teammate behavior when the change affects shared state. Keep resources bounded, and test settings changes while a request is queued or in flight.
 

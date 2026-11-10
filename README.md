@@ -4,8 +4,6 @@ English | [中文](README.zh-CN.md)
 
 Task progress for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web. A community plugin that shows the current turn, tool activity, and independent teammate progress, with optional AI observations.
 
-This plugin does not add update or restart controls. Those remain in `dsh-base`; either plugin can be enabled independently.
-
 ## Requirements
 
 | Component | Supported version |
@@ -31,8 +29,6 @@ dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.0-rc1"
 ```
 
 Enable the bundle in **Plugins**, restart the host, and reload the Web UI. The package ships its runtime files; no build, install script, or additional runtime dependency is required.
-
-If an older combined `dsh-base` still draws a progress panel, update it to the controls-only version or disable it before enabling this plugin. The controls-only `dsh-base` and `dsh-task-progress` use separate routes, client styles, and data directories.
 
 Repository topic: `dsh-plugin`. Topic discovery and a release do not by themselves mean a community market has approved or listed the plugin. Check the market entry before using a market installation route.
 
@@ -104,7 +100,7 @@ Local state is stored below `$DSH_HOME/dsh-task-progress/`, or `~/.dsh/dsh-task-
 
 The plugin does not persist probe prompts, full transcripts, file bodies, or reasoning in its probe log. Optional AI observations send a bounded summary of the current request and execution evidence to the selected provider.
 
-On first use, eligible legacy progress files from `dsh-base` can be copied into the new directory. Existing destination files win; originals are not deleted. Browser panel position and collapse preferences also migrate when the new keys are absent.
+On first use, eligible legacy progress data can be copied into the new directory. Existing destination files win; originals are not deleted. Browser panel position and collapse preferences also migrate when the new keys are absent.
 
 ## Development
 

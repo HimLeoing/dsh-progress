@@ -4,7 +4,7 @@
 
 First standalone community release of task progress for DeepSeek Harness Web.
 
-- Extract task progress from the combined `dsh-base` plugin. Restart and update controls remain in `dsh-base`.
+- Add a task progress panel for DeepSeek Harness Web.
 - Use independent routes, browser keys, styles, and local data, with non-destructive migration of eligible legacy progress data.
 - Show the current turn, recent operation, tool activity, checklists, and independent teammate details.
 - Identify teammate sources in trend-point details; support horizontal scrolling and keyboard focus.
