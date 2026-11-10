@@ -9,7 +9,7 @@ const bob=workerProgress({id:'b',label:'Bob',status:'running'},view,parent,{aiEn
 assert.equal(alice.display.percent,1);assert.equal(bob.total,2);assert.equal(bob.done,0);assert.ok(Math.abs(bob.display.percent-.1875)<1e-10,'Bob receives only his own weighted contributions, not the shared-board total')
 const waitingAlice=workerProgress({id:'a',label:'Alice',status:'running'},view,parent,{aiEnabled:true,aiScope:'all'});assert.equal(waitingAlice.display.percentKnown,false,'a child finishing its assigned work must not copy the parent overall percentage')
 const local=workerProgress({id:'b',label:'Bob',status:'running'},view,parent,{aiEnabled:false});assert.equal(local.display.percent,0)
-const unknown=workerProgress({id:'c',label:'Carol',status:'running'},view,parent,{aiEnabled:true,aiScope:'all'});assert.equal(unknown.display.percentKnown,false,'no assigned work means unknown, not an invented 0-100 fraction')
+const unknown=workerProgress({id:'c',label:'Carol',status:'running'},view,parent,{aiEnabled:true,aiScope:'all'});assert.equal(unknown.display.percentKnown,true,'no assigned checklist uses a local estimate');assert.equal(unknown.display.percent,0,'no completed evidence starts conservatively at zero')
 console.log('worker-v05 checks passed: independent circles, assigned tasks, shared weight reuse, local mode, unknown')
 const {createTracker}=await import('../lib/tracker.js')
 const listeners=new Map(),start=Date.now(),p={id:'p',seq:0,header:{cwd:'/test'},snapshotEvents:()=>[]},c={id:'c',seq:0,header:{cwd:'/test',origin:'subagent',parentSession:'p',createdAt:start+1},snapshotEvents:()=>[]}

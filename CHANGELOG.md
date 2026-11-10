@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.1-alpha1 — 2026-11-11
+
+- Add local approximate percentages without AI, including independent weighted checklist items and teammate contributions.
+- Combine execution evidence, task-type priors, and bounded comparable-work history; exclude waiting, repeated polls, and persistent services from work credit.
+- Preserve task ownership across parallel dispatch, mode changes, interruption, and cold recovery.
+- Keep overall task summaries distinct from the current command.
+- Include probe-only pricing without requiring another plugin, with separate cache buckets, price history, peak schedules, and configurable overrides.
+- Fix trend tooltips hidden by the floating panel’s positioning and clipping.
+
+Host requirement: **DSH `0.2.2-rc.1`, Web profile, Node.js `>=24.9.0`**. Local percentages remain estimates; only a successful turn end establishes `100%`.
+
 ## 0.1.0-rc1 — 2026-11-10
 
 First standalone community release of task progress for DeepSeek Harness Web.

@@ -139,8 +139,8 @@ export function apply(ctx) {
             plan:{items:focus.items,done:focus.done,total:focus.total},projectBar:{...own.projectBar,elapsedMs:focus.elapsedMs},children:[],
             observer:{...ownObserver,turnUsage:observer.workerUsage?.[focus.id]??ownObserver.turnUsage},settings:ai.settings,display:focus.display}
         }
-        sendJson(res,200,{ok:true,server:{pid:process.pid,startedAt:BOOT_AT},plugin:{name,version:'0.1.0-rc1',host:'0.2.2-rc.1'},
-          progress:{...publicProgress(view),children,observer,settings:ai.settings,display:localProgress(view,ai.settings)},worker})
+        sendJson(res,200,{ok:true,server:{pid:process.pid,startedAt:BOOT_AT},plugin:{name,version:'0.1.1-alpha1',host:'0.2.2-rc.1'},
+          progress:{...publicProgress(view),children,observer,settings:ai.settings,display:localProgress({...view,children},ai.settings)},worker})
       },
     },
     {

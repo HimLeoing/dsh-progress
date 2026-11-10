@@ -11,7 +11,7 @@ const empty={turn:1,running:true,turnStatus:'running',evidenceRevision:0,plan:{i
 check('an interrupted lead cannot turn a completed delegated board into known whole-request 100%',()=>{
  const items=[{content:'Assets',owner:'a',status:'completed'},{content:'Textures',owner:'b',status:'completed'}]
  const view={...empty,running:false,turnStatus:'interrupted',plan:{items,done:2,total:2,coverage:'delegated'},children:[{id:'a',status:'completed'},{id:'b',status:'completed'}]}
- assert.equal(localProgress(view,settings).percentKnown,false,'known delegated counts do not establish the interrupted lead whole-request scope')
+ assert.equal(localProgress(view,settings).percentKnown,true);assert.ok(localProgress(view,settings).percent<1,'delegated completion cannot establish successful whole-request completion')
 })
 check('disabled AI cannot erase actual assigned-task counts because its old model exists',()=>{
  const items=[{id:'a',content:'Implement scene',owner:'Forest',status:'completed'},{id:'b',content:'Validate scene',owner:'Forest',status:'pending'}],parent={...empty,plan:{items,done:1,total:2}}
@@ -31,9 +31,9 @@ check('33-item own checklist keeps full counts across real tracker persistence a
 check('supported PowerShell execution contributes the same strong phase evidence as bash',()=>{
  assert.equal(operationPhase('pwsh',{command:'npm run test'}),'verify');assert.equal(operationPhase('pwsh',{command:'npm run build'}),'implement')
 })
-check('time and execution volume never invent total progress for an unplanned task',()=>{
+check('local progress is approximate and does not advance merely with elapsed time',()=>{
  const view={...empty,steps:500,operations:{completed:2000,failed:0},observedPhase:'verify',commands:[{name:'bash',label:'npm test',phase:'verify'}]}
- for(const clock of [now,now+3600000]){const d=localProgress(view,{...settings,now:clock});assert.equal(d.percentKnown,false);assert.equal(d.percent,0);assert.equal(d.detailPhase,'testing')}
+ const first=localProgress(view,{...settings,now}).percent;for(const clock of [now,now+3600000]){const d=localProgress(view,{...settings,now:clock});assert.equal(d.percentKnown,true);assert.equal(d.estimated,true);assert.equal(d.percent,first);assert.ok(d.percent<1);assert.equal(d.detailPhase,'testing')}
 })
 check('unknown dependency edges and cycles are unknown, never optimistic completion paths',()=>{
  assert.equal(taskGraphRemaining([{id:'a',status:'pending',blockedBy:['missing']}],()=>100),null)

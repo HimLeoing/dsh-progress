@@ -13,7 +13,7 @@ Keep changes scoped to task progress.
 
 For a bug fix, add a deterministic regression at the seam that exhibits the problem. Use fake providers and controlled clocks instead of paid model calls. Cover main-turn and teammate behavior when the change affects shared state. Keep resources bounded, and test settings changes while a request is queued or in flight.
 
-Progress must retain its source and scope. A tool completion, checklist completion, teammate completion, and successful turn end are different events. Unknown work totals stay unknown. Do not smooth a curve by inventing observations, apply stale responses to a new turn, or silently report missing billing data as zero.
+Progress must retain its source and scope. A tool completion, checklist completion, teammate completion, and successful turn end are different events. Local percentages with unknown work totals must be marked approximate and backed by bounded execution evidence; elapsed time alone cannot advance them. Do not smooth a curve by inventing observations, apply stale responses to a new turn, or silently report missing billing data as zero.
 
 Follow the host's native read-only contracts. In particular, progress observers must not consume the model's job-output cursor or change a running process. Preserve loopback and same-origin checks on state-changing routes.
 

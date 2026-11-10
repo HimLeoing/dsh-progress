@@ -10,22 +10,22 @@ Task progress for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-har
 | --- | --- |
 | DeepSeek Harness | **`0.2.2-rc.1`**, Web profile |
 | Node.js | **`>=24.9.0`** |
-| Optional probe cost estimates | A compatible local installation of `dsh-cost-meter` |
+| Probe cost estimates | Built in; no additional plugin required |
 
-The package declares the host version in `engines.dsh`. Other host versions, Desktop, and TUI are not supported by this release candidate. DSH is in developer preview; check compatibility before updating the host.
+The package declares the host version in `engines.dsh`. Other host versions, Desktop, and TUI are not supported by this alpha release. DSH is in developer preview; check compatibility before updating the host.
 
 ## Install
 
 Install the release archive in the Web profile:
 
 ```sh
-dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.0-rc1/dsh-task-progress-0.1.0-rc1.tgz"
+dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-alpha1/dsh-task-progress-0.1.1-alpha1.tgz"
 ```
 
 Or install the tagged source:
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.0-rc1"
+dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-alpha1"
 ```
 
 Enable the bundle in **Plugins**, restart the host, and reload the Web UI. The package ships its runtime files; no build, install script, or additional runtime dependency is required.
@@ -38,8 +38,8 @@ The panel follows the **current turn**, not every task in a repository. A step i
 
 | Evidence | Display |
 | --- | --- |
-| Complete checklist, AI disabled | Completed-item progress |
-| No complete checklist, AI disabled | Current activity and elapsed time; percentage remains unknown |
+| Complete checklist, AI disabled | Weighted local estimates for each active item |
+| No complete checklist, AI disabled | An approximate local percentage, marked `≈` |
 | AI enabled with enough evidence | An approximate percentage, marked `≈` |
 | Teammates running | Independent compact cards; open a card for that teammate's progress |
 | Authoritative successful turn end | `100%` |
@@ -47,7 +47,9 @@ The panel follows the **current turn**, not every task in a repository. A step i
 
 The main turn includes the lead's integration, verification, and delivery. A delegated checklist or a group of completed teammates cannot establish that the main request is finished. The main percentage is not an average of teammate percentages.
 
-For a complete checklist, AI observations can assign relative difficulty weights once and estimate progress inside active items. Pending items contribute nothing; an unfinished item cannot consume its full weight. Rework and scope changes can reduce or invalidate an estimate.
+Local estimates combine completed execution evidence, task-type priors, and bounded history from comparable successful work. Waiting and repeated background-output polls do not advance overall progress. Mutations, useful checks, and delivery evidence update the estimate; rework can reduce it. Cold-start and unfamiliar tasks can still have substantial estimation error.
+
+For a complete checklist, weights are frozen for its current scope. Explicit weights or valid AI weights take precedence; otherwise task difficulty is estimated locally. Each item has its own evidence and prior: `overall = sum(weight × item progress)`. For example, `20% + 40% × 60% = 44%`. Pending items contribute zero, and the next item starts with its own evidence. AI observations can refine item fractions when enabled. Pending items contribute nothing; an unfinished item cannot consume its full weight. Rework and scope changes can reduce or invalidate an estimate.
 
 Verification, delivery, and teammate completion receive priority when supported by execution evidence. There is **no 90% ceiling**, no automatic climb through the nineties, and no project-wide countdown. A final step can still move an estimate directly to `100%` when the turn actually ends. The plugin does not invent intermediate values for a smoother curve.
 
@@ -69,7 +71,7 @@ No new boundary means no new automatic request. Reading the panel or waiting doe
 
 Turning AI off removes unsent work. An already-sent request may still finish to collect usage, but a response from an old configuration cannot update current progress. Changing modes does not backfill old steps.
 
-When a complete checklist exists, turning AI off can freeze the last valid AI estimate and the remaining item weights. Subsequent **actual item completions** advance the remaining portion locally. Scope changes, reopened work, or changed ownership invalidate this checkpoint. Without a complete checklist, the panel shows local activity and a gray historical AI reference. Re-enabling AI preserves the local checkpoint while awaiting a new valid observation.
+When a complete checklist exists, turning AI off can freeze the last valid AI estimate and the remaining item weights. New local item evidence advances only the portion remaining after that checkpoint; previously counted work is excluded. Actual item completion contributes its full remaining weight. Scope changes, reopened work, or changed ownership invalidate this checkpoint. Without a complete checklist, the panel uses its independent local estimate and keeps a gray historical AI reference. Re-enabling AI preserves the local checkpoint while awaiting a new valid observation.
 
 **Estimate once** waits for an eligible execution boundary. With automatic AI disabled, it provides one diagnostic observation and does not replace local progress.
 
@@ -89,13 +91,15 @@ The observer uses the native job registry's non-consuming output offsets. It doe
 
 The **Probe cost ≈** tile sums progress-observation requests from the main turn and its teammates. It excludes the models' work on the project itself. A teammate detail shows that teammate's probe cost.
 
-When available, the plugin reuses `dsh-cost-meter` pricing and billing functions, including separate cache buckets, historical prices, and exchange rates. It does not refresh balances or quotas. A `+` means some requests lack usage or pricing: the displayed amount is a known subtotal. `—` means no usable estimate is available. A failed or discarded request can still be billed.
+The plugin includes the pure pricing subset of `dsh-cost-meter` under MIT; installing that plugin is not required. It handles separate cache buckets, historical prices, peak schedules, and exchange rates without balance or quota requests. The bundled DeepSeek CNY price snapshot was checked on **2026-11-11** against the [official pricing page](https://api-docs.deepseek.com/quick_start/pricing/). Other providers use the bundled catalog; USD-to-CNY estimates use a configurable reference rate (default 7.2), not a live FX quote. Unknown gateways or models stay unpriced.
+
+Optional `pricing.json` in the plugin data directory overrides the price configuration; otherwise an existing cost-meter ledger can supply read-only prices and history. With neither file present, bundled prices are used. See [third-party notices](THIRD_PARTY_NOTICES.md). A `+` means some requests lack usage or pricing: the displayed amount is a known subtotal. `—` means no usable estimate is available. A failed or discarded request can still be billed.
 
 Local state is stored below `$DSH_HOME/dsh-task-progress/`, or `~/.dsh/dsh-task-progress/` by default:
 
 - `preferences.json`: AI settings and observation mode.
 - `progress.json`: bounded turn snapshots and checklist summaries.
-- `learning.json`: bounded local timing history.
+- `learning.json`: bounded local timing and anonymous work-profile history.
 - `probes.jsonl` and its rotated predecessor: request metadata, usage, and diagnostic outcomes.
 
 The plugin does not persist probe prompts, full transcripts, file bodies, or reasoning in its probe log. Optional AI observations send a bounded summary of the current request and execution evidence to the selected provider.

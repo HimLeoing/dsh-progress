@@ -15,7 +15,7 @@ try{
  assert.equal(view.children[0].label,'Autumn forest system and hero trees');assert.equal(view.plan.total,0,'independent workers are not checklist items');assert.equal(view.projectBar.total,1)
  now+=500;assert.equal(tracker.snapshot('lead').children[0].elapsedMs,300,'completed work clock freezes')
  emit(child,'turn/start',{turn:3});emit(child,'user/message',{source:{kind:'agent-message'},content:[{type:'text',text:'CURRENT: generic status message'}]})
- view=tracker.snapshot('lead');assert.equal(view.children[0].label,'Autumn forest system and hero trees');assert.equal(view.children[0].percentKnown,false,'unknown worker progress is not numeric zero')
+ view=tracker.snapshot('lead');assert.equal(view.children[0].label,'Autumn forest system and hero trees');assert.equal(view.children[0].percentKnown,true,'a fresh worker has a conservative local estimate')
  const model={turn:1,at:now,percent:.62,confidence:1,evidenceRevision:view.evidenceRevision};tracker.setModel('lead',model)
  view=tracker.snapshot('lead');assert.equal(localProgress(view,{aiEnabled:true,aiScope:'no-plan',now}).percent,.62)
  now+=50;emit(child,'turn/end',{reason:{kind:'completed'}});emit(parent,'turn/end',{reason:{kind:'completed'}})
