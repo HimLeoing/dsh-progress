@@ -1,0 +1,16 @@
+import assert from'node:assert/strict'
+import {buildProgressObservation}from'../lib/progress-observation.js'
+const goal='Build an interactive village with procedural geometry and independent vegetation and props. '.repeat(9)
+const items=Array.from({length:5},(_,i)=>({content:'Task '+i,status:i?'pending':'in_progress'}))
+const view={turn:1,running:true,steps:2,evidenceRevision:0,projectBar:{mode:'todos',done:0,total:5},plan:{items,done:0,total:5},ownPlan:{items:[],total:0},operations:{completed:2,failed:0},children:[{label:'Forest',status:'running',percent:.2,percentKnown:true,done:0,total:1,lastTool:{name:'write',label:'src/forest.js',status:'completed',finishedAt:1800000000000}}],probe:{goal,recentOperations:[{name:'write',label:'src/main.js',status:'completed',finishedAt:1800000000001,ms:20}],evidence:{changedFiles:['src/main.js']}}}
+const prefix=(a,b)=>{let i=0;while(i<Math.min(a.length,b.length)&&a[i]===b[i])i++;return i}
+const a=buildProgressObservation(view,{weights:[1,2,3,4,5],previous:{step:1,percent:.1,phase:'implement'}}),b=buildProgressObservation({...view,steps:3,plan:{...view.plan,done:1,items:items.map((i,n)=>n?i:{...i,status:'completed'})}},{weights:[1,2,3,4,5],previous:{step:2,percent:.2,phase:'implement'}})
+assert.ok(prefix(a,b)>goal.length,'fixed task reference precedes changing statuses/previous estimate')
+assert.equal((a.match(/Workers:/g)??[]).length,1);assert.doesNotMatch(a,/^workers:/m,'one combined worker envelope');assert.match(a,/"p":20/);assert.match(a,/src\/forest.js/);assert.doesNotMatch(a,/1800000000001/,'absolute operation timestamps do not consume probe tokens')
+const scoped=buildProgressObservation({...view,ownPlan:{items:[{content:'MAIN_INTEGRATION',status:'in_progress'},{content:'MAIN_VALIDATION',status:'pending'}],done:0,total:2}});assert.match(scoped,/MAIN_INTEGRATION/);assert.match(scoped,/separate from delegated plan weights/)
+const truncated=buildProgressObservation({...view,plan:{...view.plan,total:33}});assert.match(truncated,/"plan_summary_only":true/);assert.match(truncated,/do not return w\/f/)
+const huge=buildProgressObservation({...view,plan:{items:Array.from({length:32},(_,i)=>({content:'LONG'+i+' \\"'.repeat(900),owner:'owner'.repeat(30),status:'in_progress'})),total:33,done:0},ownPlan:{items:Array.from({length:32},()=>({content:'MAIN_LONG'+ 'x'.repeat(900),status:'pending'})),total:32,done:0},operations:{completed:500,failed:3},children:Array.from({length:12},()=>({...view.children[0],label:'\\'.repeat(300)})),probe:{...view.probe,evidence:{checks:Array.from({length:4},()=>({name:'bash',label:'FAILED_CHECK'+ '\\'.repeat(300),status:'failed'}))}}})
+assert.ok(huge.length<=10000);assert.match(huge,/"failed":3/);assert.match(huge,/FAILED_CHECK/);assert.match(huge,/"plan_summary_only":true/);assert.match(huge,/"lead_total":32/)
+assert.match(huge,/^Workers: /m);assert.match(huge,/^Lead-only responsibilities/m)
+for(const line of huge.split('\n')){if(line.startsWith('Current evidence: '))JSON.parse(line.slice('Current evidence: '.length));if(line.startsWith('Workers: '))assert.equal(JSON.parse(line.slice('Workers: '.length)).length,12)}
+console.log('probe context passed: stable prefix, combined workers, own responsibility scope, summary-only weights, bounded whole sections and retained critical evidence')

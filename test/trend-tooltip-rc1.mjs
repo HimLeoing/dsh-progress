@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict'
+let definition,cursor=0,states=[],refs=[];const registrations=[],disposers=[]
+globalThis.window={__ModuleLoader__:{load(d){definition=d}},innerWidth:1100,innerHeight:800,localStorage:{getItem(){return null},setItem(){}},addEventListener(){},removeEventListener(){}}
+globalThis.document={activeElement:null,hidden:false,querySelector(){return null},head:{appendChild(){}},createElement(){return{dataset:{},remove(){}}},addEventListener(){},removeEventListener(){}}
+globalThis.fetch=async()=>({ok:true,json:async()=>({})})
+const h=(type,props,...children)=>({type,props:props??{},children}),react={createElement:h,Fragment:Symbol(),useState(initial){const i=cursor++;if(!(i in states))states[i]=typeof initial==='function'?initial():initial;return[states[i],v=>states[i]=typeof v==='function'?v(states[i]):v]},useRef(initial){const i=cursor++;return refs[i]??={current:initial}},useEffect(){},useCallback:fn=>fn}
+await import('../client.js');const client=definition.factory(()=>react);client.apply({effect(fn){disposers.push(fn());return()=>{}},get(){},slots:{inject(key,fn){fn();return()=>{}},register(options,component){registrations.push({options,component});return()=>{}}}})
+const panel=registrations.find(r=>r.options.id==='dsh-task-progress-progress').component({}),progress={sessionId:'fixture',turn:1,running:true,turnStatus:'running',settings:{aiEnabled:true},display:{percent:.55,percentKnown:true},projectBar:{elapsedMs:100},plan:{items:[],total:0,done:0},children:[],observer:{history:[{owner:'worker-long',ownerLabel:'old label',step:67,percent:.55,at:1}]}}
+const store={getSnapshot:()=>({status:'ready',data:{progress}}),refresh(){}}
+cursor=0;let panelTree=panel.type({...panel.props,store});const raw=node=>!node||typeof node!=='object'?[]:[node,...(node.children??[]).flatMap(raw)];const details=raw(panelTree).find(n=>n.props?.['aria-label']==='Task details'||n.props?.['aria-label']==='任务详情');details.props.onClick();cursor=0;panelTree=panel.type({...panel.props,store});const trend=raw(panelTree).find(n=>n.type?.name==='ProgressTrend');assert.ok(trend)
+const name='Teammate building the procedural scene · architecture and final validation';const props={...trend.props,workers:[{id:'worker-long',label:name}]};states=[];refs=[];const render=()=>{cursor=0;return trend.type(props)},text=n=>!n?'':typeof n==='string'?n:(n.children??[]).map(text).join(' ')
+try{
+ let tree=render(),point=raw(tree).find(n=>n.type==='circle'&&n.props.tabIndex===0);assert.match(point.props['aria-label'],/architecture and final validation/);assert.match(text(tree),/architecture and final validation/)
+ const target={getBoundingClientRect:()=>({left:450,top:350,bottom:370})};point.props.onMouseEnter({currentTarget:target});tree=render();let tooltip=raw(tree).find(n=>n.props.role==='tooltip');assert.ok(tooltip);assert.match(text(tooltip),new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));assert.match(text(tooltip),/67.*55%/);assert.doesNotMatch(text(tooltip),/old label/)
+ point=raw(tree).find(n=>n.type==='circle'&&n.props.tabIndex===0);point.props.onBlur();assert.equal(raw(render()).some(n=>n.props.role==='tooltip'),false);point.props.onFocus({currentTarget:target});assert.ok(raw(render()).some(n=>n.props.role==='tooltip'))
+ console.log('trend tooltip passed: full current teammate name, step and percentage, long labels, mouse and keyboard')
+}finally{for(const dispose of disposers.reverse())dispose?.()}
