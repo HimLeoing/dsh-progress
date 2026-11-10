@@ -13,7 +13,7 @@ d=localProgress(view,{aiEnabled:true,aiScope:'all'});assert.ok(d.percent>=.1&&d.
 view.evidenceRevision++
 d=localProgress(view,{aiEnabled:true,aiScope:'all'});assert.equal(d.percent,.1,'failure discards stale partial estimates, preserves completed contribution');assert.equal(d.state,'recalculating')
 for(const item of items)item.status='completed';view.plan.done=5
-d=localProgress(view,{aiEnabled:true,aiScope:'all'});assert.equal(d.state,'recalculating');assert.equal(d.percentKnown,false,'5/5 with a stale estimate stays unknown until new evidence arrives, rather than declaring task completion')
+d=localProgress(view,{aiEnabled:true,aiScope:'all'});assert.equal(d.state,'recalculating');assert.equal(d.percentKnown,true,'stale AI falls back to a bounded local estimate');assert.ok(d.percent<1)
 view={...view,plan:{items:[],total:0,done:0},evidenceRevision:0}
 for(const eta of [12000,180000,1000,600000]){view.model.remainingMs=eta;d=localProgress(view,{aiEnabled:true});assert.equal(d.remainingMs,null,'old countdown resets never leak into the display')}
 d=localProgress(view);assert.equal(d.percentKnown,true);assert.equal(d.source,'local-estimate','switching off uses independent local evidence, not the old AI estimate');assert.ok(d.percent<1)

@@ -133,7 +133,7 @@ assert.equal(body.progress.projectBar.mode, 'todos')
 assert.equal(body.progress.projectBar.done, 1)
 assert.equal(body.progress.projectBar.total, 2)
 assert.equal(typeof body.progress.projectBar.elapsedMs, 'number')
-assert.equal(body.progress.display.remainingMs,null);assert.equal(body.progress.settings.aiEnabled,false);assert.equal(body.progress.display.percent,.5)
+assert.ok(body.progress.display.remainingMs>=1000);assert.equal(body.progress.settings.aiEnabled,false);assert.equal(body.progress.display.percent,.5)
 assert.equal(body.progress.task.label, 'Two')
 assert.ok(body.progress.projectBar.percent === 0.5, `half the plan with one item running: ${body.progress.projectBar.percent}`)
 

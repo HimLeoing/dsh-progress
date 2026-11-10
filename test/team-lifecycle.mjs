@@ -35,6 +35,6 @@ try{
  const restored=createTracker({get:key=>key==='sessions'?{list:()=>[{id:'lead',seq:0,header:{},snapshotEvents:()=>[]}]}:undefined,on:()=>()=>{}},{persistence:{load:id=>legacy.get(id)??null,save(){}}});try{restored.snapshot('lead');assert.equal(restored.snapshot('worker').children.length,0,'legacy saved snapshots also exclude peers identified by the parent roster')}finally{restored.dispose()}
  emit(parent,'turn/start',{turn:2});assert.equal(tracker.snapshot('lead').children.length,0,'previous-turn workers do not leak into new work')
  const stale=localProgress({...after,evidenceRevision:after.evidenceRevision+1},{aiEnabled:true,aiScope:'all'})
- assert.equal(stale.percentKnown,false,'real rework is unknown while awaiting evaluation, not a false exact 0%')
+ assert.equal(stale.percentKnown,true,'rework uses a local approximate fallback');assert.equal(stale.estimated,true)
  console.log('team lifecycle passed: parent isolation, durable completion, retained roster, resumed workers, turn reset, stale display')
 }finally{tracker.dispose()}

@@ -19,13 +19,13 @@ The package declares the host version in `engines.dsh`. Other host versions, Des
 Install the release archive in the Web profile:
 
 ```sh
-dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-alpha1/dsh-task-progress-0.1.1-alpha1.tgz"
+dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-alpha2/dsh-task-progress-0.1.1-alpha2.tgz"
 ```
 
 Or install the tagged source:
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-alpha1"
+dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-alpha2"
 ```
 
 Enable the bundle in **Plugins**, restart the host, and reload the Web UI. The package ships its runtime files; no build, install script, or additional runtime dependency is required.
@@ -47,11 +47,11 @@ The panel follows the **current turn**, not every task in a repository. A step i
 
 The main turn includes the lead's integration, verification, and delivery. A delegated checklist or a group of completed teammates cannot establish that the main request is finished. The main percentage is not an average of teammate percentages.
 
-Local estimates combine completed execution evidence, task-type priors, and bounded history from comparable successful work. Waiting and repeated background-output polls do not advance overall progress. Mutations, useful checks, and delivery evidence update the estimate; rework can reduce it. Cold-start and unfamiliar tasks can still have substantial estimation error.
+Local estimates work on a fresh installation. Task-type priors and completed execution evidence are primary; bounded comparable-work history is only a small refinement. A running turn without a checklist starts with a conservative approximate number and does not wait for historical samples. Waiting and repeated background-output polls do not advance overall progress. Mutations, useful checks, and delivery evidence update the estimate; rework can reduce it. Cold-start and unfamiliar tasks can still have substantial estimation error.
 
 For a complete checklist, weights are frozen for its current scope. Explicit weights or valid AI weights take precedence; otherwise task difficulty is estimated locally. Each item has its own evidence and prior: `overall = sum(weight × item progress)`. For example, `20% + 40% × 60% = 44%`. Pending items contribute zero, and the next item starts with its own evidence. AI observations can refine item fractions when enabled. Pending items contribute nothing; an unfinished item cannot consume its full weight. Rework and scope changes can reduce or invalidate an estimate.
 
-Verification, delivery, and teammate completion receive priority when supported by execution evidence. There is **no 90% ceiling**, no automatic climb through the nineties, and no project-wide countdown. A final step can still move an estimate directly to `100%` when the turn actually ends. The plugin does not invent intermediate values for a smoother curve.
+Verification, delivery, and teammate completion receive priority when supported by execution evidence. There is **no 90% ceiling**, no automatic climb through the nineties, and no automatic completion based on elapsed time. A final step can still move an estimate directly to `100%` when the turn actually ends. The plugin does not invent intermediate values for a smoother curve.
 
 The panel is draggable and collapsible. Task details show the checklist when available, probe diagnostics, and a horizontally scrollable trend. Hover or focus a point to inspect its progress and source teammate.
 
@@ -75,6 +75,14 @@ When a complete checklist exists, turning AI off can freeze the last valid AI es
 
 **Estimate once** waits for an eligible execution boundary. With automatic AI disabled, it provides one diagnostic observation and does not replace local progress.
 
+## Estimated remaining time
+
+The overall timer uses `(1 / progress - 1) × elapsed`, where progress is a fraction. A changed progress estimate or relevant evidence creates a new timer anchor; ordinary polling does not restart it. Rework can increase the estimate.
+
+With AI assistance enabled, remaining time counts down in seconds. With AI disabled, it is shown in whole minutes, or `≈ <1m` below one minute. A running timer keeps a positive lower bound; it never declares completion. Successful completion and interruption hide the timer. Teammate estimates use the current turn’s elapsed time, even when the card shows cumulative work time.
+
+If the browser bundle and backend versions differ, task details identify the mismatch and recommend restarting the host. A conservative client fallback keeps overall progress numeric while a backend reload is pending; it does not copy the current command’s progress.
+
 ## Command progress
 
 Tool activity is separate from overall task progress. A command can have a useful remaining-time estimate even when the turn's total work is unknown.
@@ -93,7 +101,7 @@ The **Probe cost ≈** tile sums progress-observation requests from the main tur
 
 The plugin includes the pure pricing subset of `dsh-cost-meter` under MIT; installing that plugin is not required. It handles separate cache buckets, historical prices, peak schedules, and exchange rates without balance or quota requests. The bundled DeepSeek CNY price snapshot was checked on **2026-11-11** against the [official pricing page](https://api-docs.deepseek.com/quick_start/pricing/). Other providers use the bundled catalog; USD-to-CNY estimates use a configurable reference rate (default 7.2), not a live FX quote. Unknown gateways or models stay unpriced.
 
-Optional `pricing.json` in the plugin data directory overrides the price configuration; otherwise an existing cost-meter ledger can supply read-only prices and history. With neither file present, bundled prices are used. See [third-party notices](THIRD_PARTY_NOTICES.md). A `+` means some requests lack usage or pricing: the displayed amount is a known subtotal. `—` means no usable estimate is available. A failed or discarded request can still be billed.
+Optional `pricing.json` in the plugin data directory overrides the price configuration; otherwise an existing cost-meter ledger can supply read-only prices and history. With neither file present, bundled prices are used. See [third-party notices](THIRD_PARTY_NOTICES.md). A `+` means some requests lack usage or pricing: the displayed amount is a known subtotal. `—` means no usable estimate is available. A failed or discarded request can still be billed. Previously unpriced requests with complete usage can be recovered from retained logs; already priced amounts remain frozen, and incomplete history does not erase known costs.
 
 Local state is stored below `$DSH_HOME/dsh-task-progress/`, or `~/.dsh/dsh-task-progress/` by default:
 

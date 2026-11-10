@@ -10,6 +10,7 @@ import {createAiProgress} from './lib/ai-progress.js'
 import { createProbeLog } from './lib/probe-log.js'
 import {workerProgress} from './lib/worker-progress.js'
 import {localProgress} from './lib/local-progress.js'
+import {createTaskEta} from './lib/task-eta.js'
 import { createProgressStore } from './lib/progress-store.js'
 import { createTracker } from './lib/tracker.js'
 
@@ -64,6 +65,8 @@ export function apply(ctx) {
   const logProbe = (record) => probeLog.write(record)
   const store = createProgressStore()
   const learning = createLearningStore()
+  const taskEta = createTaskEta()
+  ctx.effect(()=>()=>taskEta.clear(),'dsh-task-progress: ETA anchors')
   let ai
   const tracker = createTracker(ctx, {
     learning,
@@ -130,7 +133,7 @@ export function apply(ctx) {
         if(req.method==='GET'&&url.searchParams.has('foreground'))ai.observe(url.searchParams.get('foreground')==='1'?sessionId:null)
         const view=tracker.snapshot(sessionId),observer=ai.status(view.sessionId)
         const publicProgress=(value)=>{const{probe:_probe,...publicView}=value;return publicView}
-        const children=(view.children??[]).map(child=>workerProgress(child,tracker.snapshot(child.id),view,ai.settings))
+        const children=(view.children??[]).map(child=>{const own=tracker.snapshot(child.id),result=workerProgress(child,own,view,ai.settings);return{...result,display:taskEta.display({...own,running:child.status==='running',sessionId:child.id},result.display,ai.settings)}})
         const focus=children.find(child=>child.id===url.searchParams.get('worker'))
         let worker=null
         if(focus){
@@ -139,8 +142,8 @@ export function apply(ctx) {
             plan:{items:focus.items,done:focus.done,total:focus.total},projectBar:{...own.projectBar,elapsedMs:focus.elapsedMs},children:[],
             observer:{...ownObserver,turnUsage:observer.workerUsage?.[focus.id]??ownObserver.turnUsage},settings:ai.settings,display:focus.display}
         }
-        sendJson(res,200,{ok:true,server:{pid:process.pid,startedAt:BOOT_AT},plugin:{name,version:'0.1.1-alpha1',host:'0.2.2-rc.1'},
-          progress:{...publicProgress(view),children,observer,settings:ai.settings,display:localProgress({...view,children},ai.settings)},worker})
+        sendJson(res,200,{ok:true,server:{pid:process.pid,startedAt:BOOT_AT},plugin:{name,version:'0.1.1-alpha2',host:'0.2.2-rc.1'},
+          progress:{...publicProgress(view),children,observer,settings:ai.settings,display:taskEta.display(view,localProgress({...view,children},ai.settings),ai.settings)},worker})
       },
     },
     {

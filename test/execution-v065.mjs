@@ -116,7 +116,7 @@ for(const seedCurrent of [false,true]){
   assert.deepEqual(v.operations,{completed:1,failed:1,active:0});assert.equal(v.lastTool.jobId,'ptc-job')
   const worker=h.add('worker','root');h.emit('turn/start',{turn:1},worker)
   h.tracker.setModel('worker',{turn:1,at:Date.now(),evidenceAt:Date.now()-700000,evidenceRevision:0,percent:.5,confidence:2})
-  assert.equal(h.tracker.snapshot('root').children[0].percentKnown,true,'stale AI response falls back to local progress');assert.equal(h.tracker.snapshot('root').children[0].percent,0,'stale AI 50% cannot become fresh local evidence')
+  assert.equal(h.tracker.snapshot('root').children[0].percentKnown,true,'stale AI response falls back to local progress');assert.equal(h.tracker.snapshot('root').children[0].percent,.01,'stale AI 50% cannot become fresh local evidence')
   h.tracker.setModel('worker',{turn:1,at:Date.now(),evidenceAt:Date.now(),evidenceRevision:0,percent:.5,confidence:2})
   assert.equal(h.tracker.snapshot('root').children[0].percentKnown,true)
   h.emit('turn/end',{turn:1,reason:{kind:'completed'}},worker)

@@ -12,8 +12,8 @@ assert.equal(display.percentKnown,true,'completed worker tasks must not hide the
 assert.equal(display.percent,.75);assert.equal(display.source,'model');assert.equal(display.planComplete,true)
 view.model={...view.model,percent:.88};display=localProgress(view,{aiEnabled:true,aiScope:'all',now});assert.equal(display.percent,.88,'lead estimates continue to update after both workers complete')
 assert.equal(localProgress(view,{aiEnabled:false,now}).percentKnown,true,'local mode provides a distinct approximate request estimate')
-assert.equal(localProgress({...view,evidenceRevision:1},{aiEnabled:true,aiScope:'all',now}).percentKnown,false,'stale predictions cannot mask real rework')
-assert.equal(localProgress({...view,model:{...view.model,confidence:0}},{aiEnabled:true,aiScope:'all',now}).percentKnown,false)
+assert.equal(localProgress({...view,evidenceRevision:1},{aiEnabled:true,aiScope:'all',now}).percentKnown,true,'stale AI is replaced by a local estimate during rework')
+assert.equal(localProgress({...view,model:{...view.model,confidence:0}},{aiEnabled:true,aiScope:'all',now}).percentKnown,true)
 assert.equal(planCoverage(items,view.children),'delegated');assert.equal(planCoverage([...items,{owner:'lead'}],view.children),'checklist')
 const partial={...view,plan:{items:[items[0],{...items[1],status:'in_progress'}],done:1,total:2,coverage:'delegated'},model:{...view.model,percent:.65,fractions:[1,.1]}};assert.equal(localProgress(partial,{aiEnabled:true,aiScope:'all',now}).percent,.65,'a delegated-only board uses overall scope before and after workers finish');assert.equal(localProgress(partial,{aiEnabled:false,now}).percentKnown,true,'local evidence estimates the remaining lead scope for a partial board')
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'dtp-tail-'));let calls=0,observations=[]

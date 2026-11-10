@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.1-alpha2 — 2026-11-11
+
+- Show numeric local progress on fresh installations, including tasks without a checklist. Use task priors and execution evidence as the primary signals; history remains a small optional refinement.
+- Let evidence-driven progress continue beyond a fixed single-stage budget while preserving independent weighted checklist items.
+- Add estimated remaining time from progress and elapsed time, with stable anchors, second-level AI display, minute-level local display, and a positive running floor.
+- Keep resumed teammate timing separate from cumulative card time, and hide remaining time after completion or interruption.
+- Detect browser/backend version mismatches in task details; retain a conservative numeric fallback until the host is restarted.
+- Recover previously unpriced probe usage without duplicating new fees or discarding frozen known amounts.
+- Keep stale or unsupported AI responses out of AI observation history when local fallback is displayed.
+
+Host requirement: **DSH `0.2.2-rc.1`, Web profile, Node.js `>=24.9.0`**. Percentages and remaining time are estimates.
+
 ## 0.1.1-alpha1 — 2026-11-11
 
 - Add local approximate percentages without AI, including independent weighted checklist items and teammate contributions.

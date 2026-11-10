@@ -7,9 +7,9 @@ const view={turn:2,evidenceRevision:0,running:true,turnStatus:'running',projectB
 const alice=workerProgress({id:'a',label:'Alice',status:'completed'},view,parent,{aiEnabled:true,aiScope:'all'})
 const bob=workerProgress({id:'b',label:'Bob',status:'running'},view,parent,{aiEnabled:true,aiScope:'all'})
 assert.equal(alice.display.percent,1);assert.equal(bob.total,2);assert.equal(bob.done,0);assert.ok(Math.abs(bob.display.percent-.1875)<1e-10,'Bob receives only his own weighted contributions, not the shared-board total')
-const waitingAlice=workerProgress({id:'a',label:'Alice',status:'running'},view,parent,{aiEnabled:true,aiScope:'all'});assert.equal(waitingAlice.display.percentKnown,false,'a child finishing its assigned work must not copy the parent overall percentage')
+const waitingAlice=workerProgress({id:'a',label:'Alice',status:'running'},view,parent,{aiEnabled:true,aiScope:'all'});assert.equal(waitingAlice.display.percentKnown,true);assert.notEqual(waitingAlice.display.source,'model','local child completion estimate cannot copy the parent overall estimate')
 const local=workerProgress({id:'b',label:'Bob',status:'running'},view,parent,{aiEnabled:false});assert.equal(local.display.percent,0)
-const unknown=workerProgress({id:'c',label:'Carol',status:'running'},view,parent,{aiEnabled:true,aiScope:'all'});assert.equal(unknown.display.percentKnown,true,'no assigned checklist uses a local estimate');assert.equal(unknown.display.percent,0,'no completed evidence starts conservatively at zero')
+const unknown=workerProgress({id:'c',label:'Carol',status:'running'},view,parent,{aiEnabled:true,aiScope:'all'});assert.equal(unknown.display.percentKnown,true,'no assigned checklist uses a local estimate');assert.equal(unknown.display.percent,.01,'a running cold task starts with a conservative one-percent estimate')
 console.log('worker-v05 checks passed: independent circles, assigned tasks, shared weight reuse, local mode, unknown')
 const {createTracker}=await import('../lib/tracker.js')
 const listeners=new Map(),start=Date.now(),p={id:'p',seq:0,header:{cwd:'/test'},snapshotEvents:()=>[]},c={id:'c',seq:0,header:{cwd:'/test',origin:'subagent',parentSession:'p',createdAt:start+1},snapshotEvents:()=>[]}

@@ -65,7 +65,7 @@ check('truncated lists preserve exact completed-count evidence without false ali
 })
 check('fresh response does not freshen an old evidence snapshot',()=>{
  const v=fixture({tasks:2});v.plan.coverage='delegated';v.model={turn:1,at:now,evidenceAt:now-700000,evidenceRevision:8,percent:.9,confidence:2,planKey:planKey(v.plan.items)}
- const d=localProgress(v,settings);assert.equal(d.percentKnown,false);assert.equal(d.ageMs,700000)
+ const d=localProgress(v,settings);assert.equal(d.percentKnown,true);assert.ok(d.source.startsWith('local-'));assert.equal(d.ageMs,700000)
 })
 for(const item of cases)console.log(`${item.ok?'PASS':'FAIL'} ${item.name}${item.error?'\n  '+item.error:''}`)
 console.log(`Context review: ${cases.filter(item=>item.ok).length}/${cases.length} passed`)

@@ -176,7 +176,7 @@ window.__ModuleLoader__.load({
       '.dtp-point-tooltip{position:fixed;inset:auto;margin:0;box-sizing:border-box;z-index:1000;pointer-events:none;width:max-content;max-width:min(240px,calc(100vw - 16px));padding:7px 9px;border-radius:7px;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font-size:11px;line-height:1.5;box-shadow:0 4px 14px #0002;overflow-wrap:anywhere}.dtp-point-owner{font-weight:550;margin-bottom:3px}',
       '.dtp-history-reference{font-size:9px;color:var(--dsw-alias-label-secondary);opacity:.8;margin:4px 0 6px}',
       '.dtp-ai-toggle{flex:none;appearance:none;font:inherit;font-size:10px;line-height:18px;padding:2px 7px;min-width:36px;white-space:nowrap;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}.dtp-ai-toggle[aria-checked="true"]{color:#c9a34b;border-color:#c9a34b}.dtp-ai-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.dtp-ai-toggle:disabled{opacity:.5;cursor:default}.dtp-diagnostics select{font:inherit;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary)}',
-      '.dtp-recent-inline{display:flex;align-items:center;gap:4px;flex:1;min-width:0}.dtp-recent-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dtp-recent-state{flex:none;color:var(--dsw-alias-label-secondary)}.dtp-recent-state[data-failed="1"]{color:var(--dsw-alias-state-error-primary,var(--dsw-alias-label-primary))}.dtp-totalelapsed{flex:none;white-space:nowrap}.dtp-head .dtp-phase{min-width:0;flex:0 1 auto}.dtp-headpct,.dtp-title{flex:none}.dtp-head .dtp-grow{min-width:0}',
+      '.dtp-recent-inline{display:flex;align-items:center;gap:4px;flex:1;min-width:0}.dtp-recent-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dtp-recent-state{flex:none;color:var(--dsw-alias-label-secondary)}.dtp-recent-state[data-failed="1"]{color:var(--dsw-alias-state-error-primary,var(--dsw-alias-label-primary))}.dtp-task-times{display:flex;align-items:center;gap:8px;flex:0 0 auto;white-space:nowrap}.dtp-totalelapsed,.dtp-totalremaining{flex:none;white-space:nowrap}.dtp-head .dtp-phase{min-width:0;flex:0 1 auto}.dtp-headpct,.dtp-title{flex:none}.dtp-head .dtp-grow{min-width:0}',
       '.dtp-refresh{width:100%;appearance:none;background:transparent;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;color:var(--dsw-alias-label-secondary);font:inherit;font-size:11px;padding:7px;cursor:pointer;margin-top:10px}',
       '.dtp-refresh:hover{background:color-mix(in srgb,var(--dsw-alias-label-primary) 5%,transparent)}',
       '.dtp-diagnostics{padding-top:6px}',
@@ -269,7 +269,61 @@ window.__ModuleLoader__.load({
     /* state store                                                         */
     /* ------------------------------------------------------------------ */
 
+    const CLIENT_VERSION = '0.1.1-alpha2'
+    const monotonicNow=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now()
+    const compatClamp=(n,max=.99)=>Math.max(0,Math.min(max,Number.isFinite(n)?n:0))
+    const normalized=a=>{if(!a?.length||a.some(n=>!Number.isFinite(n)||n<=0))return null;const sum=a.reduce((x,y)=>x+y,0);return a.map(n=>n/sum)}
+    function conservativeWork(view){
+     // This seed deliberately excludes command.percent, task.percent, current.percent,
+     // projectBar.percent, ETA and elapsed time. Those may describe only the current operation.
+     const count=Math.max(0,Number.isFinite(view.operations?.completed)?view.operations.completed:Math.max(0,(view.steps??0)-(view.operations?.failed??0)))
+     const failures=Math.max(0,view.operations?.failed??0)
+     const last=view.lastTool,verified=last?.status==='completed'&&last.phase==='verify'
+     const delivered=last?.status==='completed'&&last.name==='present'
+     return Math.max(.01,compatClamp(delivered?.97:.78*(1-Math.exp(-count/(28+failures*3)))+(verified?.1:0)))
+    }
+    function fallback(view){
+     const own=conservativeWork(view),plan=view.plan??{},items=Array.isArray(plan.items)?plan.items:[],children=Array.isArray(view.children)?view.children:[]
+     let percent=own,weights=null,fractions=null
+     if(items.length>0&&items.length===plan.total){
+      weights=normalized(view.display?.weights)??normalized(items.map(i=>i.weight))??items.map(()=>1/items.length)
+      // Old snapshots contain no per-item evidence; never charge the entire turn's
+      // historical work to a newly-active item. Only actual completed-item credit is safe.
+      fractions=items.map(i=>i.status==='completed'?1:0)
+      const board=fractions.reduce((s,p,i)=>s+p*weights[i],0)
+      const delegated=plan.coverage==='delegated'
+      percent=delegated?.3*own+.7*board:board
+     }else if((plan.total??0)>0){percent=compatClamp((plan.done??0)/plan.total)}
+     if(children.length&&!items.length){
+      const known=children.map(c=>c.status==='completed'?1:c.display?.percentKnown&&Number.isFinite(c.display.percent)?compatClamp(c.display.percent):0)
+      percent=Math.max(own*.8,.45*own+.55*known.reduce((s,p)=>s+p,0)/known.length)
+     }
+     return{...view.display,percent:compatClamp(percent),percentKnown:true,indeterminate:false,estimated:true,source:'local-compat',state:'running',remainingMs:null,rangeMs:null,weights,fractions,
+      local:{method:'legacy-evidence-seed-v1',kind:'general',stage:view.observedPhase??view.lastTool?.phase??'discover',events:view.operations?.completed??view.steps??0,samples:0,compatibility:true}}
+    }
+    function clientDisplayCompat(view,{clientVersion,serverVersion}={}){
+     const display=view?.display??{}
+     const compatibility={clientVersion,serverVersion:serverVersion??null,mismatch:!!serverVersion&&serverVersion!==clientVersion,reason:!serverVersion?'unknown-server-version':serverVersion!==clientVersion?'restart-required':null}
+     if(!view?.sessionId||!view.running||view.turnStatus==='completed')return{display,compatibility}
+     if(Number.isFinite(display.percent)&&display.percent>=0&&display.percent<=1&&display.percentKnown!==false&&display.indeterminate!==true)return{display:{...display,percentKnown:true},compatibility}
+     if(view.settings?.aiEnabled===true&&Number.isFinite(display.retainedPercent))return{display,compatibility}
+     // Fallback on capability absence too: a missing version field is not proof of compatibility.
+     return{display:fallback(view),compatibility:{...compatibility,fallback:true,reason:compatibility.reason??'local-display-unavailable'}}
+    }
+    function normalizeClientProgress(data,{clientVersion}={}){
+     const options={clientVersion,serverVersion:data?.plugin?.version}
+     const normalize=(p)=>{
+      if(!p)return p
+      const children=(p.children??[]).map(c=>{const view={...c,sessionId:c.sessionId??c.id,turnStatus:c.turnStatus??c.status,running:c.status==='running',settings:c.settings??p.settings};return{...c,display:clientDisplayCompat(view,options).display}})
+      const result=clientDisplayCompat({...p,children},options)
+      return{...p,children,display:result.display}
+     }
+     return{...data,progress:normalize(data?.progress),worker:normalize(data?.worker),compatibility:clientDisplayCompat(data?.progress,options).compatibility}
+    }
+
     function createStore() {
+      const fallbackEtas=new Map()
+      const withEta=p=>{if(!p?.running||p.display?.eta||!p.display?.percentKnown||!(p.display.percent>0))return p;const x=Math.min(.99,p.display.percent),elapsed=Number.isFinite(p.startedAt)&&Number.isFinite(p.updatedAt)?Math.max(0,p.updatedAt-p.startedAt):p.projectBar?.elapsedMs;if(!Number.isFinite(elapsed))return p;const key=String(p.sessionId)+':'+p.turn,signature=JSON.stringify([p.display.source,x,p.evidenceRevision,p.model?.at]),at=monotonicNow();let a=fallbackEtas.get(key);if(!a||a.signature!==signature){a={signature,at,remaining:Math.max(1000,(1/x-1)*elapsed)};fallbackEtas.delete(key);fallbackEtas.set(key,a);if(fallbackEtas.size>64)fallbackEtas.delete(fallbackEtas.keys().next().value)}const remainingMs=Math.max(1000,a.remaining-Math.max(0,at-a.at));return{...p,display:{...p.display,remainingMs,eta:{method:'elapsed-progress',id:a.at,remainingMs,precision:p.settings?.aiEnabled?'second':'minute'}}}}
       let snapshot = { status: 'loading', data: null, error: null }
       const listeners = new Set()
       let timer = null
@@ -303,9 +357,10 @@ window.__ModuleLoader__.load({
           const url = (requestedSession === null ? `${API.state}?session=` : `${API.state}?session=${encodeURIComponent(requestedSession)}`)+(workerId?`&worker=${encodeURIComponent(workerId)}`:'')
           const response = await fetch(`${url}&foreground=${observing&&typeof document!=='undefined'&&!document.hidden?'1':'0'}`, { cache: 'no-store', headers: { accept: 'application/json' }, signal: controller.signal })
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
-          const data = await response.json()
+          const normalized=normalizeClientProgress(await response.json(),{clientVersion:CLIENT_VERSION})
+          const data={...normalized,progress:withEta(normalized.progress),worker:withEta(normalized.worker)}
           if (disposed || requestedRevision !== revision) return
-          snapshot = { status: 'ready', data, error: null, receivedAt: Date.now() }
+          snapshot = { status: 'ready', data, error: null, receivedAt: Date.now(), receivedMono:monotonicNow() }
           sessionSnapshots.delete(requestedSession);sessionSnapshots.set(requestedSession,snapshot)
           if(sessionSnapshots.size>16)sessionSnapshots.delete(sessionSnapshots.keys().next().value)
         } catch (error) {
@@ -315,6 +370,7 @@ window.__ModuleLoader__.load({
             data: snapshot.data,
             error: error instanceof Error ? error.message : String(error),
             receivedAt: snapshot.receivedAt,
+            receivedMono:snapshot.receivedMono,
           }
         } finally {
           clearTimeout(timeout)
@@ -675,6 +731,10 @@ window.__ModuleLoader__.load({
         if(en) return h ? `${h}h ${m%60}m` : m ? `${m}m ${String(s%60).padStart(2,'0')}s` : `${s}s`
         return h ? `${h}小时${m%60}分` : m ? `${m}分${String(s%60).padStart(2,'0')}秒` : `${s}秒`
       }
+      const taskTimeDrift=connected&&running?Math.max(0,typeof snapshot.receivedMono==='number'?monotonicNow()-snapshot.receivedMono:drift):0
+      const taskRemaining=running&&Number.isFinite(display.remainingMs)?Math.max(1000,display.remainingMs-taskTimeDrift):null
+      const taskRemainingText=taskRemaining===null?text('剩余≈估算中','Remaining ≈ estimating'):settingsForTime() ? `${text('剩余≈','Remaining ≈ ')}${duration(taskRemaining)}`:taskRemaining<60000?text('剩余≈<1分','Remaining ≈ <1m'):`${text('剩余≈','Remaining ≈ ')}${Math.ceil(taskRemaining/60000)}${text('分','m')}`
+      function settingsForTime(){return (p?.settings??{}).aiEnabled===true}
       const countdown = (ms) => {
         const s = Math.max(1,Math.ceil(ms/1000)), m = Math.floor(s/60), h = Math.floor(m/60)
         return h ? `${h}:${String(m%60).padStart(2,'0')}:${String(s%60).padStart(2,'0')}` : `${m}:${String(s%60).padStart(2,'0')}`
@@ -745,6 +805,7 @@ window.__ModuleLoader__.load({
         commands.length>2 ? h('div',null,h('div',{className:'dtp-detailheading'},`${text('并行操作','Parallel operations')} · ${commands.length}`),...commands.slice(2).map(commandRow)) : null,
 
         h('div',{id:`${detailsId.current}-diagnostics`,className:'dtp-diagnostics',role:'region','aria-label':text('预测诊断详情','Forecast diagnostics details')},
+        snapshot.data?.compatibility?.mismatch?h('p',{className:'dtp-explain'},text(`客户端 ${CLIENT_VERSION} · 后端 ${snapshot.data.compatibility.serverVersion??'未知'}；重启宿主以加载更新。`,`Client ${CLIENT_VERSION} · backend ${snapshot.data.compatibility.serverVersion??'unknown'}; restart the host to load the update.`)):null,
         display.local?h('div',{className:'dtp-trend-label',title:sourceText},h('span',null,sourceText),h('span',null,`${text('有效操作','Evidence')} ${Math.round(display.local.events)} · ${text('同类样本','Prior samples')} ${display.local.samples}`)):null,
         h('div',{className:'dtp-metrics'},...[
           [text('已记录调用','Recorded calls'),observer.turnUsage?.requests??0],
@@ -768,7 +829,7 @@ window.__ModuleLoader__.load({
         collapsed?null:h(React.Fragment,null,
           focused?h('div',{className:'dtp-worker-nav'},h('button',{type:'button',onClick:()=>{setFocusedWorker(null);store.setWorker?.(null)}},text('‹ 主任务','‹ Main task')),h('span',{title:focused.label},focused.label)):null,
           stale?h('div',{className:'dtp-notice',role:'status'},t.disconnected):null,
-          h('div',{className:'dtp-total'},h('div',{className:'dtp-totalrow'},h('span',{className:'dtp-current-summary',title:summary},summary),h('span',{className:'dtp-summary-count'},summaryCount)),h(Bar,{value:percent,shimmer:running&&!determinate,label:t.progress}),!updating&&(p?.lastTool||hasSession)?h('div',{className:'dtp-totalmeta'},p?.lastTool?h('span',{className:'dtp-recent-inline',title:`${text('最近操作','Last operation')} · ${recentText} · ${recentOutcome}`,'aria-label':`${text('最近操作','Last operation')}: ${recentText} · ${recentOutcome}`},h('span',{className:'dtp-recent-state','data-failed':p.lastTool.status==='failed'?'1':'0','aria-hidden':true},p.lastTool.status==='failed'?'!':p.lastTool.status==='background'?'↗':'✓'),h('span',{className:'dtp-recent-text'},recentText)):h('span'),h('span',{className:'dtp-totalelapsed'},typeof bar.elapsedMs==='number'?`${focused?text('累计','Total'):t.used} ${duration(running?elapsed(bar.elapsedMs):bar.elapsedMs)}`:'')):null),
+          h('div',{className:'dtp-total'},h('div',{className:'dtp-totalrow'},h('span',{className:'dtp-current-summary',title:summary},summary),h('span',{className:'dtp-summary-count'},summaryCount)),h(Bar,{value:percent,shimmer:running&&!determinate,label:t.progress}),!updating&&(p?.lastTool||hasSession)?h('div',{className:'dtp-totalmeta'},p?.lastTool?h('span',{className:'dtp-recent-inline',title:`${text('最近操作','Last operation')} · ${recentText} · ${recentOutcome}`,'aria-label':`${text('最近操作','Last operation')}: ${recentText} · ${recentOutcome}`},h('span',{className:'dtp-recent-state','data-failed':p.lastTool.status==='failed'?'1':'0','aria-hidden':true},p.lastTool.status==='failed'?'!':p.lastTool.status==='background'?'↗':'✓'),h('span',{className:'dtp-recent-text'},recentText)):h('span'),h('span',{className:'dtp-task-times'},h('span',{className:'dtp-totalelapsed'},typeof bar.elapsedMs==='number'?`${focused?text('累计','Total'):t.used} ${duration(running?elapsed(bar.elapsedMs):bar.elapsedMs)}`:''),running?h('span',{className:'dtp-totalremaining',title:text('按当前进度和已用时间估算；新进展或返工时重估','Estimated from progress and elapsed time; updates with new evidence')},taskRemainingText):null)):null),
           running&&display.historicalAi?h('div',{className:'dtp-history-reference'},`${text('上次 AI 估计','Last AI estimate')} ≈${Math.round(display.historicalAi.percent*100)}%${display.source==='local-bridge'?text(' · 当前按清单衔接',' · Now following completed items'):''}${display.bridgePaused?text(' · 范围已变，暂停衔接',' · Scope changed; checkpoint paused'):''}`):null,
           !updating && running && p?.preparing ? h(Block,{label:`${text('准备','Preparing ')}${toolNames[p.preparing.name] ?? text('操作','operation')}`,subtitle:p.preparing.label,value:text('生成中','Generating'),shimmer:true,meta:`${t.used} ${duration(elapsed(p.preparing.elapsedMs))}`,title:p.preparing.label}):null,
           !updating ? commands.slice(0,2).map(commandRow):null,
