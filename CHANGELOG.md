@@ -17,6 +17,7 @@
 - 完成证据充分且正在输出文字时，可进入可撤回的约 99% 收尾状态；新的工具调用或返工会恢复执行进度。
 - 提供方未声明支持 Off 时，采用模型最低强度档位；无推理档控制的模型使用原生配置。
 - 限制历史与日志存储，减少流式输出期间的轮次检测工作，完整日志按需渲染。
+- 开发者模式按钮与版本同处详情底栏，开启时突出显示；日志使用固定高度的紧凑滚动框。
 
 问题修复：
 
@@ -38,6 +39,7 @@ Improvements:
 - Show a reversible approximate 99% response-writing state when completed-work evidence supports it. New tool calls or rework restore execution progress.
 - Prefer Off reasoning; otherwise use the model’s lowest advertised level, or its native configuration when no control exists.
 - Bound history and diagnostic storage, reduce turn detection during token streaming, and render full records on demand.
+- Place the developer-mode button beside the version in the details footer, with an accented enabled state and a compact fixed-height log viewer.
 
 Fixes:
 

@@ -28,6 +28,28 @@ try{
  let tree=render();raw(tree).find(n=>n.props['aria-label']==='任务详情'||n.props['aria-label']==='Task details').props.onClick();tree=render()
  assert.match(text(tree),/v0.1.1-alpha3/)
  assert.ok(raw(tree).some(n=>n.type?.name==='ProbeDebug'))
+ const footer=raw(tree).find(n=>n.props?.className==='dtp-footer'),developer=raw(footer).find(n=>n.props?.role==='switch')
+ assert.ok(developer,'developer mode is a footer switch beside the version')
+ assert.equal(developer.props.className,'dtp-ai-toggle','developer mode shares AI toggle styling')
+ assert.equal(developer.props['aria-checked'],true)
+ assert.equal(raw(tree).some(n=>n.type==='input'&&n.props.type==='checkbox'),false,'no standalone developer checkbox row')
+ await developer.props.onClick();assert.equal(requests.at(-1).url,'/dsh-task-progress/preferences');assert.equal(JSON.parse(requests.at(-1).options.body).developerMode,false)
+ const debug=raw(tree).find(n=>n.type?.name==='ProbeDebug'),panelStates=states,panelRefs=refs;states=[];refs=[];cursor=0
+ let debugTree=debug.type(debug.props);assert.equal(raw(debugTree).find(n=>n.props?.className==='dtp-debug-records').props.role,'region')
+ const originalFetch=globalThis.fetch
+ const record={id:'test',sessionId:'session-12345678-abcd-5678',rootSessionId:'root',actorLabel:'session-12345678-abcd-5678',step:4,input:{content:'full input'},output:{content:'full output'}}
+ globalThis.fetch=async()=>({ok:true,json:async()=>({records:[record]})})
+ await raw(debugTree).find(n=>n.type==='button').props.onClick();cursor=0;debugTree=debug.type(debug.props);globalThis.fetch=originalFetch
+ const entry=raw(debugTree).find(n=>n.type?.name==='ProbeDebugRecord');states=[];refs=[];cursor=0;let recordTree=entry.type(entry.props)
+ assert.doesNotMatch(text(recordTree),/session-12345678-abcd-5678/,'summary never exposes a long session id')
+ assert.ok(text(recordTree).includes('#'+record.sessionId.slice(-6)))
+ assert.equal(raw(recordTree).some(n=>n.type==='pre'),false,'closed log rows do not render full payload')
+ recordTree.props.onToggle({currentTarget:{open:true}});cursor=0;recordTree=entry.type(entry.props);assert.match(text(recordTree),/full input/);assert.match(text(recordTree),/full output/)
+ states=panelStates;refs=panelRefs
+ const {readFile}=await import('node:fs/promises'),source=await readFile(new URL('../client.js',import.meta.url),'utf8')
+ assert.match(source,/\.dtp-debug\{height:196px;box-sizing:border-box;display:flex/,'log box has a fixed compact total height')
+ assert.match(source,/\.dtp-debug-records\{flex:1;min-height:0;overflow-y:scroll;/,'log contents scroll without expanding the panel')
+
  let update=raw(tree).find(n=>/^(更新插件|Update plugin)$/.test(n.props['aria-label']??''));assert.ok(update)
  const before=requests.length;await update.props.onClick();tree=render();assert.equal(requests.length,before,'first update click only arms confirmation')
  update=raw(tree).find(n=>/^(确认更新插件|Confirm plugin update)$/.test(n.props['aria-label']??''));assert.ok(update);await update.props.onClick();assert.equal(requests.at(-1).url,'/dsh-task-progress/update/apply');assert.equal(requests.at(-1).options.method,'POST')
