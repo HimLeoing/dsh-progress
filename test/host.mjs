@@ -58,7 +58,7 @@ apply(ctx)
 
 assert.deepEqual(
   routes.map((route) => route.path),
-  ['/dsh-task-progress/state', '/dsh-task-progress/preferences', '/dsh-task-progress/probe'],
+  ['/dsh-task-progress/state','/dsh-task-progress/preferences','/dsh-task-progress/debug','/dsh-task-progress/update/check','/dsh-task-progress/update/apply','/dsh-task-progress/probe'],
 )
 for (const route of routes) assert.equal(route.kind, 'exact')
 
@@ -89,6 +89,7 @@ function call(route, { method = 'GET', url = route.path, origin = 'http://127.0.
 
 const state = routes.find((route) => route.path === '/dsh-task-progress/state')
 
+assert.equal((await call(state,{host:'attacker.example:3080',origin:'http://attacker.example:3080'})).status,403)
 const noSession = await call(state)
 assert.equal(noSession.status, 200)
 let body = JSON.parse(noSession.body)
@@ -96,7 +97,7 @@ assert.equal(body.ok, true)
 assert.equal(typeof body.server.pid, 'number')
 assert.equal(typeof body.progress.projectBar.percent, 'number', 'percent is always a number')
 assert.equal(body.progress.sessionId, null)
-assert.equal(body.plugin.name,'dsh-task-progress');assert.equal(body.plugin.host,'0.2.2-rc.1');assert.equal(body.version,undefined);assert.equal(body.update,undefined);assert.equal(body.restart,undefined)
+assert.equal(body.plugin.name,'dsh-task-progress');assert.equal(body.plugin.host,'0.2.2-rc.1');assert.equal(body.version,undefined);assert.equal(typeof body.update.available,'boolean');assert.equal(body.restart,undefined)
 
 // An explicit session id that has nothing live and nothing saved still answers.
 const unknown = await call(state, { url: '/dsh-task-progress/state?session=session-nope' })
@@ -142,8 +143,25 @@ for(const [type,data]of [['subagent/descriptor',{label:'Forest'}],['turn/start',
 const focused=JSON.parse((await call(state,{url:'/dsh-task-progress/state?session=session-live&worker=session-child'})).body)
 assert.equal(focused.progress.sessionId,'session-live');assert.equal(focused.worker.sessionId,'session-child');assert.equal(focused.worker.label,'Forest');assert.equal(focused.worker.children.length,0);assert.equal(focused.worker.probe,undefined,'no private probe inputs in drill-down');assert.equal(JSON.parse((await call(state,{url:'/dsh-task-progress/state?session=session-live&worker=unrelated'})).body).worker,null)
 
-// Progress never registers host management controls.
-assert.ok(routes.every(route=>!/(restart|update)/u.test(route.path)))
+// Self update is distinct from host update/restart controls.
+assert.ok(routes.every(route=>!route.path.startsWith('/dsh-base/')&&!route.path.endsWith('/restart')))
+const debug=routes.find(row=>row.path==='/dsh-task-progress/debug')
+assert.equal((await call(debug,{url:debug.path+'?session=session-live',origin:'https://evil.example'})).status,403)
+assert.equal((await call(debug,{method:'POST'})).status,405)
+assert.equal((await call(debug)).status,400)
+assert.deepEqual(JSON.parse((await call(debug,{url:debug.path+'?session=session-live'})).body).records,[])
+const update=routes.find(row=>row.path==='/dsh-task-progress/update/apply')
+assert.equal((await call(update,{method:'POST',origin:'https://evil.example'})).status,403)
+assert.equal((await call(update,{method:'POST'})).status,409)
+// Viewing past turns must leave the live root and observer intact.
+emit('session/event',session,event('turn/end',{turn:1,status:'completed'}))
+emit('session/event',session,event('turn/start',{turn:2}))
+const prior=JSON.parse((await call(state,{url:state.path+'?session=session-live&turn=1'})).body)
+assert.equal(prior.progress.turn,1);assert.equal(prior.progress.historical,true);assert.equal(prior.progress.display.percent,1)
+const present=JSON.parse((await call(state,{url:state.path+'?session=session-live'})).body)
+assert.equal(present.progress.turn,2);assert.equal(present.progress.running,true)
+const missing=JSON.parse((await call(state,{url:state.path+'?session=session-live&turn=9'})).body)
+assert.equal(missing.progress.unavailable,true)
 
 const preferences=routes.find(row=>row.path==='/dsh-task-progress/preferences')
 assert.equal((await call(preferences,{method:'GET'})).status,405)
@@ -152,6 +170,8 @@ assert.equal((await call(preferences,{method:'POST',origin:'https://evil.example
 assert.equal((await call(preferences,{method:'POST',payload:'{bad'})).status,400)
 assert.equal((await call(preferences,{method:'POST',payload:'x'.repeat(1025)})).status,413)
 assert.equal((await call(preferences,{method:'POST',payload:'{"aiEnabled":"yes"}'})).status,400)
+assert.equal((await call(preferences,{method:'POST',payload:'{"developerMode":"yes"}'})).status,400)
+assert.equal(JSON.parse((await call(preferences,{method:'POST',payload:'{"developerMode":true}'})).body).settings.developerMode,true)
 const configured=await call(preferences,{method:'POST',payload:'{"aiEnabled":true,"aiScope":"all"}'})
 assert.equal(JSON.parse(configured.body).settings.aiEnabled,true)
 assert.equal((await call(routes.find(row=>row.path==='/dsh-task-progress/probe'),{method:'POST'})).status,400)

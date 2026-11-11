@@ -12,7 +12,7 @@ assert.equal(percentageAnswer.remainingMs,null)
 assert.doesNotMatch(requests.at(-1).system,/integer seconds/,'production prompt asks for no ETA')
 let unsupportedCalls=0
 const unsupported={get(key){if(key==='agentDefaultModel')return{currentSelection:()=>({provider:'p',model:'m'})};if(key==='llm')return{resolveModelInfo:async()=>({reasoning:{efforts:[{id:'low'}]}}),async *stream(){unsupportedCalls++}}}}
-const closed=createModelProbe(unsupported,{reasoningEffort:'off'});assert.equal(await closed.ask('test'),null);assert.equal(unsupportedCalls,0,'missing Off support must not silently switch to a paid thinking tier')
+const closed=createModelProbe(unsupported,{reasoningEffort:'off'});assert.equal(await closed.ask('test'),null);assert.equal(unsupportedCalls,1,'missing Off support uses the lowest advertised thinking tier')
 // Multiple snapshots describe one physical call, not additive usage deltas.
 const snapshots={get(k){if(k==='agentDefaultModel')return{currentSelection:()=>({provider:'p',model:'m'})};if(k==='llm')return{resolveModelInfo:async()=>({reasoning:{efforts:[{id:'off'}]}}),async *stream(){yield{type:'usage',usage:{inputTokens:40,cacheReadTokens:20,outputTokens:0}};yield{type:'text-delta',text:'{"p":50,"c":2,"s":"implement"}'};yield{type:'usage',usage:{inputTokens:100,cacheReadTokens:60,outputTokens:10}};yield{type:'finish',reason:{kind:'stop'}}}}}}
 const snapshotProbe=createModelProbe(snapshots,{reasoningEffort:'off',percentOnly:true});const snapshotAnswer=await snapshotProbe.ask('fixture');assert.deepEqual(snapshotAnswer.usage,{inputTokens:100,outputTokens:10,cacheReadTokens:60});assert.equal(snapshotProbe.lastAttempt.calls,1)

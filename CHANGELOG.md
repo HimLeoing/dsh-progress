@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.1.1-alpha3 — 2026-11-11
+
+[中文](#中文) | [English](#english)
+
+### 中文
+
+新增功能：
+
+- 阅读位置与右侧轮次导航可切换历史进度，主任务和子代理状态按轮次隔离保存。
+- 增加开发者模式，可查看或导出探针的调用时间、完整服务输入、输出流和用量；默认关闭，日志仅保存在本机并按容量轮换。
+- 任务详情右下角显示版本，标题栏提示更新的 RC。两次点击确认后核验安装包，通过官方安装器更新并重启。
+
+体验优化：
+
+- 完成证据充分且正在输出文字时，可进入可撤回的约 99% 收尾状态；新的工具调用或返工会恢复执行进度。
+- 提供方未声明支持 Off 时，采用模型最低强度档位；无推理档控制的模型使用原生配置。
+- 限制历史与日志存储，减少流式输出期间的轮次检测工作，完整日志按需渲染。
+
+问题修复：
+
+- 修复进度曲线悬停时同时出现两份提示。
+- 修复同一任务范围内 AI 估计过期后切换本地曲线造成的突降；真实返工与新的较低评估仍可回退。
+- 修复历史主任务误显示子代理续接后的轮次。
+- 修复更新操作并发执行、RC 数字排序及部分系统证书环境无法检查更新的问题。
+
+### English
+
+New features:
+
+- Follow the reading position and turn navigator to inspect earlier progress. Keep lead and teammate snapshots isolated by turn.
+- Add an opt-in developer mode for local probe timestamps, complete service inputs, output streams, and usage. Logs rotate by size and can be exported.
+- Show the loaded version in task details and offer newer RC releases in the header. Confirm twice to verify the archive, install through the official profile CLI, and restart.
+
+Improvements:
+
+- Show a reversible approximate 99% response-writing state when completed-work evidence supports it. New tool calls or rework restore execution progress.
+- Prefer Off reasoning; otherwise use the model’s lowest advertised level, or its native configuration when no control exists.
+- Bound history and diagnostic storage, reduce turn detection during token streaming, and render full records on demand.
+
+Fixes:
+
+- Remove duplicate trend hover tooltips.
+- Retain a valid same-scope AI estimate while its replacement is pending, avoiding a discontinuity into the cold local curve. Real rework and lower fresh assessments can still reduce progress.
+- Preserve the correct teammate turn when reviewing older lead turns.
+- Serialize updates, order numeric RC versions correctly, and use system trust roots for GitHub checks without weakening TLS validation.
+
+Host requirement: **DSH `0.2.2-rc.1`, Web profile, Node.js `>=24.9.0`**. The response-writing state is an estimate, not a host final-answer signal. Historical snapshots and raw diagnostic logs have bounded retention.
+
 ## 0.1.1-alpha2 — 2026-11-11
 
 - Show numeric local progress on fresh installations, including tasks without a checklist. Use task priors and execution evidence as the primary signals; history remains a small optional refinement.

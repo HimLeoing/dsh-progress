@@ -13,9 +13,13 @@ import {localProgress} from './lib/local-progress.js'
 import {createTaskEta} from './lib/task-eta.js'
 import { createProgressStore } from './lib/progress-store.js'
 import { createTracker } from './lib/tracker.js'
+import {createProbeDebugLog} from './lib/probe-debug-log.js'
+import {createPluginUpdater} from './lib/plugin-update.js'
+import {restartPluginHost} from './lib/plugin-restart.js'
 
 export const name = 'dsh-task-progress'
 export const inject = ['webServer']
+const VERSION='0.1.1-alpha3'
 
 /** Reply with JSON and no caching. */
 function sendJson(res, status, body) {
@@ -37,7 +41,9 @@ const PROBE_LOG = join(process.env.DSH_HOME ?? join(homedir(), '.dsh'), 'dsh-tas
 /** Whether the request arrived on the machine's own loopback interface. */
 function isLoopback(req) {
   const address = req.socket?.remoteAddress ?? ''
-  return address === '127.0.0.1' || address === '::1' || address === '::ffff:127.0.0.1'
+  let hostname
+  try{hostname=new URL(`http://${req.headers.host}`).hostname}catch{return false}
+  return ['localhost','127.0.0.1','[::1]'].includes(hostname)&&(address === '127.0.0.1' || address === '::1' || address === '::ffff:127.0.0.1')
 }
 
 /**
@@ -68,6 +74,7 @@ export function apply(ctx) {
   const taskEta = createTaskEta()
   ctx.effect(()=>()=>taskEta.clear(),'dsh-task-progress: ETA anchors')
   let ai
+  const debugLog=createProbeDebugLog(join(process.env.DSH_HOME??join(homedir(),'.dsh'),'dsh-task-progress','probe-debug.jsonl'),{enabled:()=>ai?.settings.developerMode===true})
   const tracker = createTracker(ctx, {
     learning,
     captureTranscript:false,
@@ -82,14 +89,22 @@ export function apply(ctx) {
     },
     persistence: {
       load: (id) => store.get(id),
+      loadTurn:(id,turn)=>store.get(id,turn),
+      listTurns:id=>store.listTurns(id),
       save: (id, record) => store.set(id, record),
     },
   })
 
   // Explicitly enabled, compact Off observations. Local mode never calls a model.
-  const probe = createModelProbe(ctx,{reasoningEffort:'off',percentOnly:true,maxTokens:320})
+  const probe = createModelProbe(ctx,{reasoningEffort:'off',percentOnly:true,maxTokens:320,debugLog})
   const quote=createProbeCost()
   ai=createAiProgress({probe,snapshot:id=>tracker.snapshot(id),setModel:(id,value)=>tracker.setModel(id,value),recordObservation:(id,value)=>tracker.recordObservation(id,value),quote,history:createProbeHistory(PROBE_LOG,{quote}),log:logProbe})
+  let updatePort=null,restartTimer=null,updateDisposed=false
+  const updater=createPluginUpdater({version:VERSION,profile:ctx.get?.('profileContext'),isRunning:()=>tracker.snapshot().running||ai.busy,restart:()=>new Promise((resolve,reject)=>{
+    const restartWhenIdle=()=>{if(updateDisposed)return resolve();if(tracker.snapshot().running||ai.busy){restartTimer=setTimeout(restartWhenIdle,2000);restartTimer.unref?.();return}Promise.resolve().then(()=>restartPluginHost(updatePort)).then(resolve,reject)}
+    restartWhenIdle()
+  })})
+  ctx.effect(()=>()=>{updateDisposed=true;updater.dispose();clearTimeout(restartTimer);void debugLog.flush()},'dsh-task-progress: updater and diagnostics')
   ctx.effect(()=>{
     const timer=setInterval(()=>{void ai.tick().catch(error=>logProbe({kind:'failure',error:error.message,at:Date.now()}))},200)
     timer.unref?.()
@@ -131,40 +146,65 @@ export function apply(ctx) {
         const url = new URL(req.url ?? '/', `http://${req.headers.host ?? '127.0.0.1'}`)
         const sessionId = url.searchParams.get('session') ?? undefined
         if(req.method==='GET'&&url.searchParams.has('foreground'))ai.observe(url.searchParams.get('foreground')==='1'?sessionId:null)
-        const view=tracker.snapshot(sessionId),observer=ai.status(view.sessionId)
+        const selectedTurn=url.searchParams.get('turn'),turn=selectedTurn&&/^\d{1,9}$/u.test(selectedTurn)?Number(selectedTurn):undefined
+        const view=tracker.snapshot(sessionId,{turn}),observer=ai.status(view.sessionId,view)
+        void updater.check()
         const publicProgress=(value)=>{const{probe:_probe,...publicView}=value;return publicView}
-        const children=(view.children??[]).map(child=>{const own=tracker.snapshot(child.id),result=workerProgress(child,own,view,ai.settings);return{...result,display:taskEta.display({...own,running:child.status==='running',sessionId:child.id},result.display,ai.settings)}})
+        const childSnapshot=child=>view.historical?(Number.isSafeInteger(child.turn)?tracker.snapshot(child.id,{turn:child.turn}):{...tracker.snapshot(''),sessionId:child.id,historical:true,unavailable:true}):tracker.snapshot(child.id)
+        const children=(view.children??[]).map(child=>{const own=childSnapshot(child),result=workerProgress(child,own,view,ai.settings);return{...result,display:taskEta.display({...own,running:!view.historical&&child.status==='running',sessionId:child.id},result.display,ai.settings)}})
         const focus=children.find(child=>child.id===url.searchParams.get('worker'))
         let worker=null
         if(focus){
-          const own=tracker.snapshot(focus.id),ownObserver=ai.status(focus.id)
+          const own=childSnapshot(focus),ownObserver=ai.status(focus.id,own)
           worker={...publicProgress(own),...focus,sessionId:focus.id,label:focus.label,rootSessionId:view.sessionId,running:focus.status==='running',turnStatus:focus.status,
             plan:{items:focus.items,done:focus.done,total:focus.total},projectBar:{...own.projectBar,elapsedMs:focus.elapsedMs},children:[],
             observer:{...ownObserver,turnUsage:observer.workerUsage?.[focus.id]??ownObserver.turnUsage},settings:ai.settings,display:focus.display}
         }
-        sendJson(res,200,{ok:true,server:{pid:process.pid,startedAt:BOOT_AT},plugin:{name,version:'0.1.1-alpha2',host:'0.2.2-rc.1'},
+        sendJson(res,200,{ok:true,server:{pid:process.pid,startedAt:BOOT_AT},plugin:{name,version:VERSION,host:'0.2.2-rc.1'},update:updater.view(),
           progress:{...publicProgress(view),children,observer,settings:ai.settings,display:taskEta.display(view,localProgress({...view,children},ai.settings),ai.settings)},worker})
       },
     },
     {
       kind:'exact',path:'/dsh-task-progress/preferences',
       handler:async(req,res)=>{
-        if(!isLoopback(req)||!originMatches(req))return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
+        if(!isLoopback(req)||!originMatches(req)||req.headers['sec-fetch-site']==='cross-site')return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
         if(req.method!=='POST')return sendJson(res,405,{ok:false,error:'POST only'})
         try{
           let raw=''
           for await(const part of req){raw+=part;if(Buffer.byteLength(raw)>1024)return sendJson(res,413,{ok:false,error:'body too large'})}
           const value=JSON.parse(raw)
-          if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['aiEnabled','aiScope','cadence'].includes(key))||'aiEnabled' in value&&typeof value.aiEnabled!=='boolean'||'aiScope' in value&&!['no-plan','all'].includes(value.aiScope)||'cadence' in value&&!['step','balanced','every-2','adaptive','milestones'].includes(value.cadence))return sendJson(res,400,{ok:false,error:'invalid preferences'})
+          if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['aiEnabled','aiScope','cadence','developerMode'].includes(key))||'aiEnabled' in value&&typeof value.aiEnabled!=='boolean'||'developerMode' in value&&typeof value.developerMode!=='boolean'||'aiScope' in value&&!['no-plan','all'].includes(value.aiScope)||'cadence' in value&&!['step','balanced','every-2','adaptive','milestones'].includes(value.cadence))return sendJson(res,400,{ok:false,error:'invalid preferences'})
           const previous=ai.settings,settings=ai.configure(value);tracker.configureLocalMode(previous,settings)
           sendJson(res,200,{ok:true,settings})
         }catch(error){sendJson(res,error instanceof SyntaxError?400:500,{ok:false,error:error.message})}
       }
     },
     {
+      kind:'exact',path:'/dsh-task-progress/debug',handler:async(req,res)=>{
+        if(!isLoopback(req)||!originMatches(req)||req.headers['sec-fetch-site']==='cross-site')return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
+        if(req.method!=='GET')return sendJson(res,405,{ok:false,error:'GET only'})
+        const url=new URL(req.url??'/',`http://${req.headers.host??'127.0.0.1'}`),sessionId=url.searchParams.get('session'),worker=url.searchParams.get('worker'),turnText=url.searchParams.get('turn')
+        if(!sessionId)return sendJson(res,400,{ok:false,error:'session required'})
+        const turn=turnText&&/^\d{1,9}$/u.test(turnText)?Number(turnText):tracker.snapshot(sessionId).turn
+        const root=tracker.snapshot(sessionId,{turn})
+        if(worker&&!root.children?.some(child=>child.id===worker))return sendJson(res,400,{ok:false,error:'unknown worker'})
+        const result=await debugLog.read(worker?{sessionIds:[worker],rootSessionId:sessionId,rootTurn:turn,limit:url.searchParams.has('download')?1000:100}:{rootSessionId:sessionId,rootTurn:turn,limit:url.searchParams.has('download')?1000:100})
+        sendJson(res,200,{ok:true,enabled:ai.settings.developerMode,...result,records:result.records.map(record=>({...record,actorLabel:record.sessionId===sessionId?'主代理':root.children?.find(child=>child.id===record.sessionId)?.label??record.sessionId}))})
+      }
+    },
+    ...['check','apply'].map(action=>({kind:'exact',path:'/dsh-task-progress/update/'+action,handler:async(req,res)=>{
+      if(!isLoopback(req)||!originMatches(req)||req.headers['sec-fetch-site']==='cross-site')return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
+      if(req.method!=='POST')return sendJson(res,405,{ok:false,error:'POST only'})
+      if(action==='check')return sendJson(res,200,{ok:true,update:await updater.check(true)})
+      if(tracker.snapshot().running||ai.busy)return sendJson(res,409,{ok:false,error:'Finish running tasks before updating the plugin'})
+      updatePort=req.socket.localPort
+      void updater.apply().catch(()=>{})
+      sendJson(res,202,{ok:true,update:updater.view()})
+    }})),
+    {
       kind:'exact',path:'/dsh-task-progress/probe',
       handler:async(req,res)=>{
-        if(!isLoopback(req)||!originMatches(req))return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
+        if(!isLoopback(req)||!originMatches(req)||req.headers['sec-fetch-site']==='cross-site')return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
         if(req.method!=='POST')return sendJson(res,405,{ok:false,error:'POST only'})
         const url=new URL(req.url??'/',`http://${req.headers.host??'127.0.0.1'}`),id=url.searchParams.get('session')
         if(!id)return sendJson(res,400,{ok:false,error:'session required'})

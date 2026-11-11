@@ -14,8 +14,12 @@ try{
  let tree=render(),point=raw(tree).find(n=>n.type==='circle'&&n.props.tabIndex===0)
  const target={getBoundingClientRect:()=>({left:1040,top:570,bottom:590})}
  point.props.onMouseEnter({currentTarget:target});tree=render()
+ assert.equal(raw(tree).some(n=>n.props.role==='tooltip'),false,'pointer hover uses only the native title tooltip')
+ assert.match(text(raw(tree).find(n=>n.type==='title')),/67.*55%/)
+ point.props.onFocus({currentTarget:target});tree=render()
  const tooltip=raw(tree).find(n=>n.props.role==='tooltip')
- assert.ok(tooltip,'hover must render the numeric tooltip')
+ assert.ok(tooltip,'keyboard focus must render a numeric tooltip')
+ assert.equal(raw(tree).some(n=>n.type==='title'),false,'native title is suppressed while the keyboard tooltip is visible')
  assert.equal(tooltip.props.popover,'manual','tooltip must enter the top layer instead of the backdrop-filter card containing block')
  assert.match(text(tooltip),/67.*55%/)
  assert.match(text(tooltip),/architecture and final validation/)

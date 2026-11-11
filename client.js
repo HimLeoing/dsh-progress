@@ -14,6 +14,7 @@ window.__ModuleLoader__.load({
       state: '/dsh-task-progress/state',
       preferences:'/dsh-task-progress/preferences',
       probe:'/dsh-task-progress/probe',
+      debug:'/dsh-task-progress/debug', update:'/dsh-task-progress/update/apply',
     }
     const POLL_MS = 1200
     const COLLAPSE_KEY = 'dsh-task-progress.panel.collapsed.v2'
@@ -153,6 +154,7 @@ window.__ModuleLoader__.load({
       '.dtp-details{margin-top:10px;padding-top:10px;border-top:1px solid var(--dsw-alias-border-l2);max-height:min(400px,calc(100dvh - 290px));overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}',
       '.dtp-details[data-content="0"]{padding-top:0}',
       '.dtp-card[data-collapsed="0"]{width:var(--dtp-expanded-width,352px)}.dtp-card{transition:opacity .2s ease}.dtp-head{cursor:grab;touch-action:none;user-select:none}.dtp-overlay[data-dragging="1"] .dtp-head{cursor:grabbing}.dtp-head:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px;border-radius:6px}.dtp-head button{cursor:pointer}.dtp-card{max-height:max(80px,calc(100dvh - var(--dtp-top,96px) - 12px))}.dtp-current-summary{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--dsw-alias-label-primary)}.dtp-summary-count{flex:none;font-size:10px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums}',
+      '.dtp-version{text-align:right;color:var(--dsw-alias-label-tertiary);font-size:9px;margin-top:8px}.dtp-debug{font-size:10px;margin:4px 0 8px;overflow-wrap:anywhere}.dtp-debug button,.dtp-debug a{font:inherit;color:inherit;background:transparent;border:1px solid var(--dsw-alias-border-l2);border-radius:5px;padding:5px 7px;margin-right:6px}.dtp-debug pre{white-space:pre-wrap;max-height:260px;overflow:auto;font:10px/1.5 monospace;border:1px solid var(--dsw-alias-border-l2);padding:6px;border-radius:5px}.dtp-debug summary{cursor:pointer;padding:5px 0}.dtp-update{color:var(--dsw-alias-brand-primary)}',
       '.dtp-diag-top,.dtp-trend-label,.dtp-probe-state,.dtp-diag-setting{display:flex;align-items:center;gap:7px;justify-content:space-between;font-size:10px;color:var(--dsw-alias-label-secondary)}.dtp-diag-top{margin-bottom:9px}.dtp-status-pill{padding:2px 5px;border-radius:4px;background:color-mix(in srgb,var(--dsw-alias-label-primary) 5%,transparent)}.dtp-status-pill[data-active="1"]{color:var(--dsw-alias-brand-primary)}.dtp-probe-effort{font-variant:small-caps}.dtp-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.dtp-metric{display:flex;flex-direction:column;gap:3px;padding:7px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;min-width:0}.dtp-metric strong{font-size:14px;font-weight:550;color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums}.dtp-metric:last-child strong{font-size:12px}.dtp-metric span{font-size:9px;color:var(--dsw-alias-label-secondary)}.dtp-trend{margin:10px 0 6px}.dtp-sparkline{width:100%;height:64px;display:block;color:var(--dsw-alias-label-primary)}.dtp-trend-label{font-size:9px}.dtp-probe-state{justify-content:flex-start;padding:7px 0}.dtp-latency{margin-left:auto;font-variant-numeric:tabular-nums}.dtp-observations{font-size:9px;color:var(--dsw-alias-label-secondary);display:grid;gap:5px;margin-bottom:8px}.dtp-observations>div{display:grid;grid-template-columns:1fr auto auto;gap:10px}.dtp-observations[data-running="0"]>div{grid-template-columns:1fr auto}.dtp-diag-empty{padding:8px 0;font-size:10px;color:var(--dsw-alias-label-secondary)}.dtp-diag-setting{padding:9px 0;border-top:1px solid var(--dsw-alias-border-l2)}.dtp-diag-setting select{padding:3px 5px;max-width:150px}.dtp-diag-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}.dtp-diag-actions button{appearance:none;font:inherit;font-size:10px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;padding:6px 3px;color:var(--dsw-alias-label-primary);background:transparent;cursor:pointer}.dtp-diag-actions button:hover{background:color-mix(in srgb,var(--dsw-alias-label-primary) 5%,transparent)}.dtp-diag-actions button:disabled{opacity:.4;cursor:default}.dtp-diag-actions button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}',
       '.dtp-detailmeta{font-size:11px;margin-bottom:7px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums}',
       '.dtp-detailmeta strong{font-weight:500;color:var(--dsw-alias-label-primary)}',
@@ -269,7 +271,7 @@ window.__ModuleLoader__.load({
     /* state store                                                         */
     /* ------------------------------------------------------------------ */
 
-    const CLIENT_VERSION = '0.1.1-alpha2'
+    const CLIENT_VERSION = '0.1.1-alpha3'
     const monotonicNow=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now()
     const compatClamp=(n,max=.99)=>Math.max(0,Math.min(max,Number.isFinite(n)?n:0))
     const normalized=a=>{if(!a?.length||a.some(n=>!Number.isFinite(n)||n<=0))return null;const sum=a.reduce((x,y)=>x+y,0);return a.map(n=>n/sum)}
@@ -331,6 +333,7 @@ window.__ModuleLoader__.load({
       let disposed = false
       let sessionId = null
       let workerId = null
+      let selectedTurn = null
       let observing=false
       let revision = 0
       let controller = null
@@ -354,7 +357,7 @@ window.__ModuleLoader__.load({
         controller = new AbortController()
         const timeout = setTimeout(() => controller?.abort(), 10000)
         try {
-          const url = (requestedSession === null ? `${API.state}?session=` : `${API.state}?session=${encodeURIComponent(requestedSession)}`)+(workerId?`&worker=${encodeURIComponent(workerId)}`:'')
+          const url = (requestedSession === null ? `${API.state}?session=` : `${API.state}?session=${encodeURIComponent(requestedSession)}`)+(workerId?`&worker=${encodeURIComponent(workerId)}`:'')+(selectedTurn!==null?`&turn=${selectedTurn}`:'')
           const response = await fetch(`${url}&foreground=${observing&&typeof document!=='undefined'&&!document.hidden?'1':'0'}`, { cache: 'no-store', headers: { accept: 'application/json' }, signal: controller.signal })
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
           const normalized=normalizeClientProgress(await response.json(),{clientVersion:CLIENT_VERSION})
@@ -400,17 +403,20 @@ window.__ModuleLoader__.load({
           if (next === sessionId) return
           sessionId = next
           workerId = null
+          selectedTurn = null
           revision += 1
           controller?.abort()
           snapshot = sessionSnapshots.get(next) ?? { status: 'loading', data: snapshot.data ? { ...snapshot.data, progress: { sessionId: next, turnStatus: 'idle' } } : null, error: null }
           emit()
           refresh()
         },
+        setTurn(turn){const next=Number.isSafeInteger(turn)&&turn>0?turn:null;if(next===selectedTurn)return;selectedTurn=next;workerId=null;revision++;controller?.abort();void refresh()},
         setObserving(value){if(observing===!!value)return;observing=!!value;void refresh()},
         setWorker(id){const next=typeof id==='string'&&id? id:null;if(workerId===next)return;workerId=next;revision++;controller?.abort();snapshot={...snapshot,data:snapshot.data?{...snapshot.data,worker:null}:null};emit();void refresh()},
         clearSession(id) {
           if(sessionId===id)this.setSession(null)
         },
+        isSessionContext(token){return contexts.at(-1)?.token===token},
         attachSession(token,id){const next=typeof id==='string'&&id!==''?id:null;contexts.push({token,id:next});this.setSession(next)},
         detachSession(token){const index=contexts.findIndex(entry=>entry.token===token);if(index<0)return;const wasTop=index===contexts.length-1,[entry]=contexts.splice(index,1);if(wasTop&&sessionId===entry.id)this.setSession(contexts.at(-1)?.id??null)},
         refresh,
@@ -541,7 +547,7 @@ window.__ModuleLoader__.load({
       const show=(event,point)=>{const rect=event.currentTarget.getBoundingClientRect(),vw=window.innerWidth||1024,vh=window.innerHeight||768;setTooltip({owner:owner(point),value:value(point),left:Math.max(8,Math.min(vw-248,rect.left-110)),top:rect.bottom+8>vh-100?Math.max(8,rect.top-96):rect.bottom+8,bottom:rect.bottom,anchorTop:rect.top})}
       return h('div',{className:'dtp-trend-plot'},h('div',{ref:scroll,className:'dtp-trend-scroll',onScroll:event=>{const node=event.currentTarget;follow.current=node.scrollWidth-node.clientWidth-node.scrollLeft<24;setTooltip(null)},tabIndex:0,role:'region','aria-label':text('进度变化，可左右滚动，聚焦或悬停查看节点','Progress history; scroll horizontally and focus or hover a point')},h('svg',{viewBox:`0 0 ${width} 76`,style:{width:`${width}px`},className:'dtp-sparkline',role:'group','aria-label':text('本轮进度观察','Progress observations')},
         h('path',{d:`M12 58H${width-12}`,stroke:'currentColor',opacity:.14}),h('polyline',{points:points.map((point,i)=>`${x(i)},${y(point)}`).join(' '),fill:'none',stroke:'var(--dsw-alias-brand-primary)',strokeWidth:2,strokeLinejoin:'round'}),
-        ...points.map((point,i)=>h('g',{key:`${point.at}:${i}`,className:'dtp-trend-point'},h('circle',{cx:x(i),cy:y(point),r:9,fill:'transparent',tabIndex:0,role:'img','aria-label':label(point),onMouseEnter:event=>show(event,point),onMouseLeave:event=>{if(document.activeElement!==event.currentTarget)setTooltip(null)},onFocus:event=>show(event,point),onBlur:()=>setTooltip(null),onKeyDown:event=>{if(event.key==='Escape')setTooltip(null)}},h('title',null,label(point))),h('circle',{cx:x(i),cy:y(point),r:point.kind==='actual'?3.5:2.5,pointerEvents:'none',fill:point.kind==='actual'?'var(--dsw-alias-label-primary)':'var(--dsw-alias-brand-primary)'}))))),tooltip?h('div',{ref:tooltipNode,className:'dtp-point-tooltip',role:'tooltip',popover:topLayer?'manual':undefined,style:topLayer?{left:tooltip.left,top:tooltip.top,maxHeight:'calc(100dvh - 16px)'}:{position:'relative',left:0,top:0,maxWidth:'100%',marginTop:4}},tooltip.owner?h('div',{className:'dtp-point-owner'},tooltip.owner):null,h('div',null,tooltip.value)):null)
+        ...points.map((point,i)=>h('g',{key:`${point.at}:${i}`,className:'dtp-trend-point'},h('circle',{cx:x(i),cy:y(point),r:9,fill:'transparent',tabIndex:0,role:'img','aria-label':label(point),onMouseEnter:()=>setTooltip(null),onMouseLeave:()=>{},onFocus:event=>show(event,point),onBlur:()=>setTooltip(null),onKeyDown:event=>{if(event.key==='Escape')setTooltip(null)}},!tooltip?h('title',null,label(point)):null),h('circle',{cx:x(i),cy:y(point),r:point.kind==='actual'?3.5:2.5,pointerEvents:'none',fill:point.kind==='actual'?'var(--dsw-alias-label-primary)':'var(--dsw-alias-brand-primary)'}))))),tooltip?h('div',{ref:tooltipNode,className:'dtp-point-tooltip',role:'tooltip',popover:topLayer?'manual':undefined,style:topLayer?{left:tooltip.left,top:tooltip.top,maxHeight:'calc(100dvh - 16px)'}:{position:'relative',left:0,top:0,maxWidth:'100%',marginTop:4}},tooltip.owner?h('div',{className:'dtp-point-owner'},tooltip.owner):null,h('div',null,tooltip.value)):null)
     }
 
     /** `PanelInfo.activePanelId === null` means the Conversation is on screen. */
@@ -694,6 +700,9 @@ window.__ModuleLoader__.load({
       const [details, setDetails] = useState(false)
       const [aiBusy,setAiBusy]=useState(false)
       const [aiError,setAiError]=useState('')
+      const [updateConfirm,setUpdateConfirm]=useState(false),[updateBusy,setUpdateBusy]=useState(false)
+      useEffect(()=>{setUpdateConfirm(false)},[snapshot.data?.update?.version])
+      useEffect(()=>{if(!updateConfirm)return;const timer=setTimeout(()=>setUpdateConfirm(false),8000);return()=>clearTimeout(timer)},[updateConfirm])
       const detailsButton = useRef(null)
       const detailsId = useRef(`dtp-details-${Math.random().toString(36).slice(2)}`)
       const [focusedWorker,setFocusedWorker]=useState(null)
@@ -723,7 +732,7 @@ window.__ModuleLoader__.load({
       const retained=running&&!display.percentKnown&&Number.isFinite(display.retainedPercent)
       const percent = updating ? 0 : status === 'completed' ? 1 : Math.max(0,Math.min(.99,(retained?display.retainedPercent:display.percent) ?? 0))
       const determinate=updating||status==='completed'||display.percentKnown===true||retained
-      const percentText = determinate ? `${display.estimated||retained?'≈':''}${Math.round(percent*100)}%` : running?text('进行中','Working'):status==='interrupted'?t.interrupted:text('待开始','Ready')
+      const percentText = p?.unavailable?text('未记录','Not recorded'):determinate ? `${display.estimated||retained?'≈':''}${Math.round(percent*100)}%` : running?text('进行中','Working'):status==='interrupted'?t.interrupted:text('待开始','Ready')
       const elapsed = (ms) => typeof ms === 'number' ? ms+drift : null
       const duration = (ms) => {
         if(ms>0&&ms<1000)return en?'<1s':'<1秒'
@@ -745,7 +754,7 @@ window.__ModuleLoader__.load({
         return left > 0 ? left : null
       }
       const state=stale?'disconnected':!hasSession?'idle':status==='completed'?'completed':status==='interrupted'?'interrupted':display.state??status
-      const phases={planning:text('任务规划','Planning'),searching:text('查找与定位','Searching'),reading:text('阅读与定位','Reading'),writing:text('编写内容','Writing'),editing:text('修改调整','Editing'),installing:text('安装依赖','Installing'),building:text('构建项目','Building'),executing:text('运行命令','Running commands'),fixing:text('修复问题','Fixing'),testing:text('运行测试','Testing'),reviewing:text('检查结果','Reviewing'),previewing:text('检查效果','Checking visuals'),documenting:text('编写说明','Documenting'),packaging:text('整理产物','Packaging'),delivering:text('交付结果','Delivering'),finishing:text('收尾检查','Final checks'),coordinating:text('协调团队','Coordinating'),waiting:text('等待外部操作','Waiting'),processing:text('继续处理','Processing'),discover:text('分析与准备','Exploring'),implement:text('构建与实现','Implementing'),verify:text('检查与验证','Validating'),deliver:text('整理与交付','Delivering'),wait:text('等待外部操作','Waiting'),unknown:text('正在处理','Processing')}
+      const phases={answering:text('正在输出答复','Writing response'),planning:text('任务规划','Planning'),searching:text('查找与定位','Searching'),reading:text('阅读与定位','Reading'),writing:text('编写内容','Writing'),editing:text('修改调整','Editing'),installing:text('安装依赖','Installing'),building:text('构建项目','Building'),executing:text('运行命令','Running commands'),fixing:text('修复问题','Fixing'),testing:text('运行测试','Testing'),reviewing:text('检查结果','Reviewing'),previewing:text('检查效果','Checking visuals'),documenting:text('编写说明','Documenting'),packaging:text('整理产物','Packaging'),delivering:text('交付结果','Delivering'),finishing:text('收尾检查','Final checks'),coordinating:text('协调团队','Coordinating'),waiting:text('等待外部操作','Waiting'),processing:text('继续处理','Processing'),discover:text('分析与准备','Exploring'),implement:text('构建与实现','Implementing'),verify:text('检查与验证','Validating'),deliver:text('整理与交付','Delivering'),wait:text('等待外部操作','Waiting'),unknown:text('正在处理','Processing')}
       const phaseText=updating?t.updating:state==='disconnected'?text('连接中断','Disconnected'):state==='completed'?t.done:state==='interrupted'?t.interrupted:!running?hasSession?text('等待新任务','Ready'):t.noSession:phases[display.detailPhase??display.phase??p?.phase]??phases.unknown
       const sourceNames={'local-estimate':text('本地工作量估计','Local work estimate'),'local-weighted':text('本地加权估计','Local weighted estimate'),'local-counts':text('本地清单摘要','Local checklist summary'),'local-bridge':text('本地清单衔接','Local checkpoint'),weighted:text('AI任务权重','AI task weights'),model:text('AI估计','AI estimate'),plan:text('清单完成度','Checklist completion'),activity:text('实际执行记录','Observed activity'),completed:text('实际完成','Completed')}
       const sourceText=sourceNames[display.source]??text('实际执行记录','Observed activity')
@@ -763,7 +772,7 @@ window.__ModuleLoader__.load({
       const currentOperation=commands.filter(row=>!row.infinite).at(-1)??p?.preparing
       const localStage=({discover:text('搜集与分析','Gathering and analysis'),implement:text('产出与完善','Producing and refining'),verify:text('核对与验证','Checking and validation'),deliver:text('整理与交付','Preparing delivery')})[display.local?.stage]??phaseText
       const localSummary=display.source?.startsWith('local-')?(p?.task?.label?`${text('推进任务','Working on task')} · ${p.task.label}`:`${({research:text('资料调研','Research'),build:text('项目实现','Implementation'),writing:text('内容创作','Writing'),general:text('整体任务','Overall task')})[display.local?.kind]??text('整体任务','Overall task')} · ${localStage}`):null
-      const summary=updating?t.updating:status==='completed'?text('任务已完成','Task completed'):status==='interrupted'?text('任务已停止','Task stopped'):!running?text('等待开始','Ready to start'):localSummary??(currentOperation?`${!commands.length&&p?.preparing?text('准备 · ','Preparing · '):''}${toolNames[currentOperation.name]??currentOperation.name}${currentOperation.label?` · ${currentOperation.label}`:''}`:children.some(child=>child.status==='running')?text(`${children.filter(child=>child.status==='running').length} 位队友并行执行`,'Teammates working in parallel'):p?.task?.label||`${text('第','Step ')}${Math.max(1,p?.steps??1)}${text('步 · ',' · ')}${phaseText==='继续处理'?text('推敲执行方案','Working through the approach'):phaseText}`)
+      const summary=p?.unavailable?text('未记录此轮进度','No progress recorded for this turn'):display.source==='final-response'?text('正在输出答复','Writing response'):updating?t.updating:status==='completed'?text('任务已完成','Task completed'):status==='interrupted'?text('任务已停止','Task stopped'):!running?text('等待开始','Ready to start'):localSummary??(currentOperation?`${!commands.length&&p?.preparing?text('准备 · ','Preparing · '):''}${toolNames[currentOperation.name]??currentOperation.name}${currentOperation.label?` · ${currentOperation.label}`:''}`:children.some(child=>child.status==='running')?text(`${children.filter(child=>child.status==='running').length} 位队友并行执行`,'Teammates working in parallel'):p?.task?.label||`${text('第','Step ')}${Math.max(1,p?.steps??1)}${text('步 · ',' · ')}${phaseText==='继续处理'?text('推敲执行方案','Working through the approach'):phaseText}`)
       const summaryCount=!focused&&bar.mode==='agents'?`${completedChildren}/${children.length} ${text('子代理','workers')}`:plan.total?`${plan.done}/${plan.total} ${text('项','tasks')}`:hasSession?`${p?.operations?.completed??0} ${text('次操作','operations')}`:''
       const commandLabel = (row) => `${toolNames[row.name] ?? row.name}${row.label ? ` · ${row.label}` : ''}`
       const commandRow = (row) => {
@@ -800,11 +809,14 @@ window.__ModuleLoader__.load({
       const probeCostTitle=(focused?text('仅此子代理的进度探针，包含本轮主任务内的续接','Only this worker’s progress probes within this main request'):text('本轮主代理及所有子代理的进度探针，按内置价格与缓存用量估算','Main and all worker progress probes; built-in prices and cache usage'))+(probeUsage.unpricedRequests?text(`；${probeUsage.unpricedRequests}次调用缺少用量或价格，显示已知费用`,`; ${probeUsage.unpricedRequests} calls lack usage or pricing; known cost only`):'')
       const historyPoints=(observer.history??[]).filter(point=>Number.isFinite(point.percent)&&point.percent<1).slice(-32)
       if(status==='completed'&&(observer.history??[]).length)historyPoints.push({percent:1,at:p?.endedAt??now,kind:'actual'})
+      const update=snapshot.data?.update??{}
+      const applyUpdate=async()=>{if(!updateConfirm){setUpdateConfirm(true);return}setUpdateBusy(true);setAiError('');try{await postJson(API.update,{});await store.refresh()}catch(error){setAiError(error.message)}finally{setUpdateBusy(false);setUpdateConfirm(false)}}
       const detailsContents = h('div',{id:detailsId.current,className:'dtp-details','data-content':plan.items.length||commands.length>2?'1':'0',role:'region','aria-label':text('任务进度详情','Progress details')},
         checklistContents,
         commands.length>2 ? h('div',null,h('div',{className:'dtp-detailheading'},`${text('并行操作','Parallel operations')} · ${commands.length}`),...commands.slice(2).map(commandRow)) : null,
 
         h('div',{id:`${detailsId.current}-diagnostics`,className:'dtp-diagnostics',role:'region','aria-label':text('预测诊断详情','Forecast diagnostics details')},
+        update.error?h('p',{className:'dtp-explain',role:'status'},update.phase==='failed'?text('插件更新失败，请稍后重试。','Plugin update failed. Try again later.'):text('暂时无法检查插件更新。','Plugin updates are temporarily unavailable.')):null,
         snapshot.data?.compatibility?.mismatch?h('p',{className:'dtp-explain'},text(`客户端 ${CLIENT_VERSION} · 后端 ${snapshot.data.compatibility.serverVersion??'未知'}；重启宿主以加载更新。`,`Client ${CLIENT_VERSION} · backend ${snapshot.data.compatibility.serverVersion??'unknown'}; restart the host to load the update.`)):null,
         display.local?h('div',{className:'dtp-trend-label',title:sourceText},h('span',null,sourceText),h('span',null,`${text('有效操作','Evidence')} ${Math.round(display.local.events)} · ${text('同类样本','Prior samples')} ${display.local.samples}`)):null,
         h('div',{className:'dtp-metrics'},...[
@@ -818,15 +830,19 @@ window.__ModuleLoader__.load({
         h('div',{className:'dtp-observations','data-running':running?'1':'0'},...(observer.history??[]).slice(-3).reverse().map((point,index)=>h('div',{key:index},h('span',{title:point.ownerLabel??''},`${point.ownerLabel?point.ownerLabel+' · ':point.trigger==='worker-step'?text('队友 · ','Worker · '):''}${point.step?`${text('第','Step ')}${point.step}${text('步','')}`:text('观察节点','Observation')}`),h('span',null,point.kind==='failure'?text('未成功','Failed'):point.kind==='cancelled'?text('已取消','Cancelled'):Number.isFinite(point.percent)?point.percent>=1?text('清单已完','Checklist done'):`≈${Math.round(point.percent*100)}%`:'—'),running?h('span',null,point.at?`${duration(Math.max(0,now-point.at))}${text('前',' ago')}`:''):null))),
         h('label',{className:'dtp-diag-setting'},h('span',null,text('评估节奏','Observation mode')),h('select',{'aria-label':text('评估节奏','Observation mode'),value:settings.cadence??'balanced',disabled:aiBusy,onChange:event=>changeAi({cadence:event.target.value})},h('option',{value:'balanced'},text('智能均衡','Smart balanced')),h('option',{value:'every-2'},text('隔步省费','Every other step')),h('option',{value:'step'},text('逐步精细','Every step')))),
         h('label',{className:'dtp-diag-setting'},h('span',null,text('辅助范围','AI scope')),h('select',{'aria-label':text('AI辅助范围','AI scope'),value:settings.aiScope,disabled:aiBusy,onChange:event=>changeAi({aiScope:event.target.value})},h('option',{value:'all'},text('所有任务','All tasks')),h('option',{value:'no-plan'},text('仅无清单','Without checklist')))),
+        h('label',{className:'dtp-diag-setting'},h('span',null,text('开发者模式','Developer mode')),h('input',{type:'checkbox','aria-label':text('开发者模式','Developer mode'),checked:settings.developerMode===true,disabled:aiBusy,onChange:event=>changeAi({developerMode:event.target.checked})})),
+        settings.developerMode?h(ProbeDebug,{sessionId:root?.sessionId,turn:root?.turn,worker:focused?.id,text}):null,
         observer.error?h('p',{className:'dtp-explain'},text('本次评估未成功，将在后续步骤重试。','Observation failed; retrying on subsequent steps.')):null,
-        h('div',{className:'dtp-diag-actions'},h('button',{type:'button',disabled:aiBusy||!running||observer.available===false||['updating','queued'].includes(observer.state),onClick:estimateOnce},text('单次估计','Estimate once')),h('button',{type:'button',onClick:()=>store.refresh()},text('刷新状态','Refresh')),h('button',{type:'button',onClick:panelPosition.reset},text('复位面板','Reset position')))))
+        h('div',{className:'dtp-diag-actions'},h('button',{type:'button',disabled:aiBusy||!running||observer.available===false||['updating','queued'].includes(observer.state),onClick:estimateOnce},text('单次估计','Estimate once')),h('button',{type:'button',onClick:()=>store.refresh()},text('刷新状态','Refresh')),h('button',{type:'button',onClick:panelPosition.reset},text('复位面板','Reset position'))),h('div',{className:'dtp-version'},`v${snapshot.data?.plugin?.version??CLIENT_VERSION}`)))
 
       return h('div',{ref:panelPosition.overlay,className:'dtp-overlay','data-dragging':panelPosition.dragging?'1':'0',style:panelPosition.style},h('section',{className:'dtp-card','data-state':state,'data-idle':running||updating?'0':'1','data-collapsed':collapsed?'1':'0','aria-label':t.progress,onKeyDown:event=>{if(event.key==='Escape'&&details){setDetails(false);detailsButton.current?.focus();event.stopPropagation()}}},
         h('div',{className:'dtp-head',...panelPosition.header,title:text('拖动移动 · Home 复位','Drag to move · Home to reset')},h(Ring,{value:percent,size:collapsed?15:21,indeterminate:running&&!determinate,muted:state==='interrupted'||state==='disconnected'}),h('span',{className:'dtp-headpct',title:retained?text('保留上次有效估计，正在更新','Last valid estimate; updating'):undefined},percentText),collapsed?null:h('span',{className:'dtp-title'},t.progress),collapsed?null:h('span',{className:'dtp-phase',title:phaseText},phaseText),h('span',{className:'dtp-grow'}),
+          !collapsed&&update.available?h('button',{type:'button',className:'dtp-collapse dtp-update','aria-label':updateConfirm?text('确认更新插件','Confirm plugin update'):text('更新插件','Update plugin'),title:updateConfirm?text('再次点击安装并重启','Click again to install and restart'):`${text('更新至','Update to')} v${update.version}`,disabled:updateBusy||update.busy||running||stale,onClick:applyUpdate},updateBusy?'…':updateConfirm?'✓':'↑'):null,
           collapsed||updating?null:h('button',{type:'button',role:'switch',className:'dtp-ai-toggle','aria-label':text('AI辅助','AI assistance'),'aria-checked':settings.aiEnabled,title:`${text('AI辅助','AI assistance')} · ${settings.aiEnabled?text('开启','On'):text('关闭','Off')}`,disabled:aiBusy||stale||!connected,onClick:()=>changeAi({aiEnabled:!settings.aiEnabled})},text('AI辅助','AI assistance')),
           collapsed?null:h('button',{ref:detailsButton,type:'button',className:'dtp-collapse','aria-label':text('任务详情','Task details'),'aria-expanded':details,'aria-controls':detailsId.current,title:text('任务详情','Task details'),onClick:()=>{setDetails(v=>!v)}},infoGlyph),
           h('button',{type:'button',className:'dtp-collapse','aria-label':collapsed?t.collapsed:t.expanded,'aria-expanded':!collapsed,onClick:toggle,title:collapsed?t.collapsed:t.expanded},chevron)),
         collapsed?null:h(React.Fragment,null,
+          p?.historical?h('div',{className:'dtp-history-reference'},text(`第 ${p.turn} 轮 · 历史进度`,`Turn ${p.turn} · Historical progress`)):null,
           focused?h('div',{className:'dtp-worker-nav'},h('button',{type:'button',onClick:()=>{setFocusedWorker(null);store.setWorker?.(null)}},text('‹ 主任务','‹ Main task')),h('span',{title:focused.label},focused.label)):null,
           stale?h('div',{className:'dtp-notice',role:'status'},t.disconnected):null,
           h('div',{className:'dtp-total'},h('div',{className:'dtp-totalrow'},h('span',{className:'dtp-current-summary',title:summary},summary),h('span',{className:'dtp-summary-count'},summaryCount)),h(Bar,{value:percent,shimmer:running&&!determinate,label:t.progress}),!updating&&(p?.lastTool||hasSession)?h('div',{className:'dtp-totalmeta'},p?.lastTool?h('span',{className:'dtp-recent-inline',title:`${text('最近操作','Last operation')} · ${recentText} · ${recentOutcome}`,'aria-label':`${text('最近操作','Last operation')}: ${recentText} · ${recentOutcome}`},h('span',{className:'dtp-recent-state','data-failed':p.lastTool.status==='failed'?'1':'0','aria-hidden':true},p.lastTool.status==='failed'?'!':p.lastTool.status==='background'?'↗':'✓'),h('span',{className:'dtp-recent-text'},recentText)):h('span'),h('span',{className:'dtp-task-times'},h('span',{className:'dtp-totalelapsed'},typeof bar.elapsedMs==='number'?`${focused?text('累计','Total'):t.used} ${duration(running?elapsed(bar.elapsedMs):bar.elapsedMs)}`:''),running?h('span',{className:'dtp-totalremaining',title:text('按当前进度和已用时间估算；新进展或返工时重估','Estimated from progress and elapsed time; updates with new evidence')},taskRemainingText):null)):null),
@@ -843,10 +859,64 @@ window.__ModuleLoader__.load({
      * Reports which Session the page is showing. The dock is session-scoped and
      * hands the id over directly; the element itself renders nothing.
      */
+    function ProbeDebug({sessionId,turn,worker,text}) {
+      const [result,setResult]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState('')
+      const generation=useRef(0)
+      useEffect(()=>{generation.current++;setResult(null);setError('');setBusy(false);return()=>{generation.current++}},[sessionId,turn,worker])
+      const url=`${API.debug}?session=${encodeURIComponent(sessionId??'')}&turn=${turn??''}${worker?`&worker=${encodeURIComponent(worker)}`:''}`
+      const load=async()=>{const token=++generation.current;setBusy(true);setError('');try{const response=await fetch(url,{cache:'no-store'});if(!response.ok)throw new Error(`HTTP ${response.status}`);const data=await response.json();if(token===generation.current)setResult(data)}catch(e){if(token===generation.current)setError(e.message)}finally{if(token===generation.current)setBusy(false)}}
+      return h('div',{className:'dtp-debug'},h('p',null,text('仅开启后记录完整请求和响应，内容可能包含对话与文件片段。日志保存在本机。','Records full requests and responses while enabled. Logs may include conversation and file excerpts, and stay on this device.')),h('button',{type:'button',disabled:busy,onClick:load},busy?text('读取中…','Loading…'):text('查看探针日志','View probe logs')),h('a',{href:url+'&download=1',download:`probe-logs-turn-${turn}.json`},text('下载日志','Download logs')),error?h('p',{role:'status'},text('日志读取失败，请重试。','Could not load logs. Try again.')):null,result?h('div',null,h('div',null,`${text('已记录调用','Recorded calls')} ${result.records?.length??0}`),result.truncated?h('p',null,text('仅展示最近记录；日志按容量轮换。','Recent records only; logs rotate by size.')):null,...(result.records??[]).map((record,index)=>h(ProbeDebugRecord,{key:record.id??index,record,text}))):null)
+    }
+
+    function ProbeDebugRecord({record,text}) {
+      const [open,setOpen]=useState(false)
+      return h('details',{onToggle:event=>setOpen(event.currentTarget.open)},h('summary',null,`${record.actorLabel??record.sessionId??''} · ${record.startedAt?new Date(record.startedAt).toLocaleString():''} · ${record.step?text('第','Step ')+record.step+text('步',''):record.status??''}`),open?h('pre',null,JSON.stringify(record,null,2)):null)
+    }
+
+    // Use only public DOM markers emitted by the host transcript and turn rail.
+    // No transcript text or internal React state is read.
+    function observeReadingTurn(store,token) {
+      if(typeof document.querySelectorAll!=='function')return()=>{}
+      let timer=null,closed=false
+      const read=()=>{
+        timer=null;if(closed||!store.isSessionContext?.(token)||document.hidden)return
+        const rows=[...document.querySelectorAll('[data-chat-turn]:not([hidden])')].filter(row=>!row.closest?.('[hidden]'))
+        if(!rows.length)return
+        const visible=rows.filter(row=>{const r=row.getBoundingClientRect();return r.width>0&&r.height>0})
+        if(!visible.length)return
+        const scroller=visible[0].closest?.('[data-conversation-scroll]')??visible[0].parentElement?.closest?.('[data-chat-scroll]')
+        const bounds=scroller?.getBoundingClientRect()??{top:0,height:window.innerHeight}
+        const line=bounds.top+Math.min(96,bounds.height*.2)
+        const root=visible[0].closest?.('[data-chat-following-tail]')
+        const latest=Math.max(...visible.map(row=>Number(row.getAttribute('data-chat-turn'))).filter(Number.isSafeInteger))
+        const active=[...document.querySelectorAll('nav button[data-index][aria-current="true"]')].find(node=>{const r=node.getBoundingClientRect();return r.width>0&&r.height>0})
+        const railTurn=active?Number(active.getAttribute('aria-label')?.match(/\d+/g)?.at(-1)):NaN
+        let turn=null
+        if(root&&(!Number.isSafeInteger(railTurn)||railTurn===latest))turn=null
+        else if(Number.isSafeInteger(railTurn)&&railTurn>0)turn=railTurn
+        else {
+          for(const row of visible){const r=row.getBoundingClientRect(),n=Number(row.getAttribute('data-chat-turn'));if(Number.isSafeInteger(n)&&n>0&&r.top<=line)turn=n}
+          if(turn===null)turn=Number(visible[0].getAttribute('data-chat-turn'))
+        }
+        store.setTurn(turn)
+      }
+      const schedule=()=>{if(timer===null&&!closed)timer=setTimeout(read,80)}
+      document.addEventListener('scroll',schedule,true)
+      // Ignore token-by-token markdown mutations: only transcript seats and the
+      // host's active-turn markers can change the selected progress snapshot.
+      const changed=records=>{if(!records||records.some(record=>record.type==='attributes'||[...(record.addedNodes??[]),...(record.removedNodes??[])].some(node=>node.nodeType===1&&(node.matches?.('[data-chat-turn],nav')||node.querySelector?.('[data-chat-turn],nav button[data-index]')))))schedule()}
+      const observer=typeof MutationObserver==='function'?new MutationObserver(changed):null
+      document.addEventListener('visibilitychange',schedule)
+      observer?.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-current','data-chat-following-tail','data-chat-turn']})
+      schedule()
+      return()=>{closed=true;clearTimeout(timer);observer?.disconnect();document.removeEventListener('scroll',schedule,true);document.removeEventListener('visibilitychange',schedule)}
+    }
+
     function SessionProbe({ store, sessionId }) {
       useEffect(() => {
         const token={};store.attachSession(token,sessionId)
-        return () => store.detachSession(token)
+        const stop=observeReadingTurn(store,token)
+        return () => {stop();store.detachSession(token)}
       }, [store, sessionId])
       return null
     }

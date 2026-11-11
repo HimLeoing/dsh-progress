@@ -19,13 +19,13 @@ The package declares the host version in `engines.dsh`. Other host versions, Des
 Install the release archive in the Web profile:
 
 ```sh
-dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-alpha2/dsh-task-progress-0.1.1-alpha2.tgz"
+dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-alpha3/dsh-task-progress-0.1.1-alpha3.tgz"
 ```
 
 Or install the tagged source:
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-alpha2"
+dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-alpha3"
 ```
 
 Enable the bundle in **Plugins**, restart the host, and reload the Web UI. The package ships its runtime files; no build, install script, or additional runtime dependency is required.
@@ -34,7 +34,7 @@ Repository topic: `dsh-plugin`. Topic discovery and a release do not by themselv
 
 ## Progress
 
-The panel follows the **current turn**, not every task in a repository. A step is a completed agent execution boundary. It is not a known fraction of the total work.
+The panel follows the turn you are reading. Scroll or use the conversation turn navigator to inspect an earlier turn; return to the bottom for the live turn. Retained history is bounded, and an unavailable turn is identified explicitly. A step is a completed agent execution boundary. It is not a known fraction of the total work.
 
 | Evidence | Display |
 | --- | --- |
@@ -51,7 +51,7 @@ Local estimates work on a fresh installation. Task-type priors and completed exe
 
 For a complete checklist, weights are frozen for its current scope. Explicit weights or valid AI weights take precedence; otherwise task difficulty is estimated locally. Each item has its own evidence and prior: `overall = sum(weight × item progress)`. For example, `20% + 40% × 60% = 44%`. Pending items contribute zero, and the next item starts with its own evidence. AI observations can refine item fractions when enabled. Pending items contribute nothing; an unfinished item cannot consume its full weight. Rework and scope changes can reduce or invalidate an estimate.
 
-Verification, delivery, and teammate completion receive priority when supported by execution evidence. There is **no 90% ceiling**, no automatic climb through the nineties, and no automatic completion based on elapsed time. A final step can still move an estimate directly to `100%` when the turn actually ends. The plugin does not invent intermediate values for a smoother curve.
+Verification, delivery, and teammate completion receive priority when supported by execution evidence. There is **no 90% ceiling**, no automatic climb through the nineties, and no automatic completion based on elapsed time. A final step can still move an estimate directly to `100%` when the turn actually ends. During text output, completed checklists or verified delivery evidence can qualify a reversible `≈99%` “Writing response” state. DSH does not expose a final-answer-start marker, so this is an estimate: another tool call or rework restores execution progress. Only successful turn completion establishes `100%`.
 
 The panel is draggable and collapsible. Task details show the checklist when available, probe diagnostics, and a horizontally scrollable trend. Hover or focus a point to inspect its progress and source teammate.
 
@@ -59,7 +59,7 @@ The panel is draggable and collapsible. Task details show the checklist when ava
 
 AI assistance is **disabled by default**. Enable it in the panel header. An enabled button has an accent border and text.
 
-Observations use the current session's selected provider and **Off reasoning**. Off is not free: requests still consume input, cached-input, and output tokens. A provider that does not advertise Off is not silently changed to another reasoning level.
+Observations use the current session's selected provider and **Off reasoning**. Off is not free: requests still consume input, cached-input, and output tokens. When the provider does not advertise Off, the model’s lowest advertised reasoning level is used. Models without reasoning controls use their native default; the plugin does not invent unsupported options.
 
 Three observation modes are available:
 
@@ -68,6 +68,8 @@ Three observation modes are available:
 - **Every step:** observe each eligible completed step for finer feedback.
 
 No new boundary means no new automatic request. Reading the panel or waiting does not trigger a timed probe. There is no hourly request quota; requests are serialized and queues are bounded. More detailed observation can cost more.
+
+While AI remains enabled, an aged estimate can be retained during ordinary same-scope execution until its replacement arrives. The retained state is not a new AI observation; failures, rework, changed scope, or resumed teammate turns invalidate it. A fresh lower estimate remains allowed.
 
 Turning AI off removes unsent work. An already-sent request may still finish to collect usage, but a response from an old configuration cannot update current progress. Changing modes does not backfill old steps.
 
@@ -105,14 +107,18 @@ Optional `pricing.json` in the plugin data directory overrides the price configu
 
 Local state is stored below `$DSH_HOME/dsh-task-progress/`, or `~/.dsh/dsh-task-progress/` by default:
 
-- `preferences.json`: AI settings and observation mode.
+- `preferences.json`: AI settings, observation mode, and the developer-mode switch.
 - `progress.json`: bounded turn snapshots and checklist summaries.
 - `learning.json`: bounded local timing and anonymous work-profile history.
 - `probes.jsonl` and its rotated predecessor: request metadata, usage, and diagnostic outcomes.
 
-The plugin does not persist probe prompts, full transcripts, file bodies, or reasoning in its probe log. Optional AI observations send a bounded summary of the current request and execution evidence to the selected provider.
+Normal probe logs contain metadata only. Developer mode is off by default. While enabled, `probe-debug.jsonl` records actual LLM-service inputs, output chunks, call times, errors, and usage for the main turn and teammates. Open or export these records from task details. These local logs may contain request content and model reasoning; they are not provider HTTP captures and do not add credentials. Two rotating files are capped at 5 MiB each; oversized payloads are marked truncated. Earlier raw content cannot be reconstructed by enabling the switch later. Optional AI observations send a bounded summary of the current request and execution evidence to the selected provider.
 
 On first use, eligible legacy progress data can be copied into the new directory. Existing destination files win; originals are not deleted. Browser panel position and collapse preferences also migrate when the new keys are absent.
+
+## Plugin updates
+
+Task details show the loaded version at the bottom right. A header update button appears for a newer RC release: click once to confirm, then click the check mark to install. The updater verifies the published SHA-256 checksum, validates the host requirement, uses the official profile installer, and restarts the same Web host. Updates wait for running tasks to finish. The RC channel does not automatically install alpha releases.
 
 ## Development
 
