@@ -8,29 +8,29 @@
 
 | 组件 | 支持版本 |
 | --- | --- |
-| DeepSeek Harness | **`0.2.2-rc.1`，Web profile** |
+| DeepSeek Harness | **`>=0.2.2-rc.1`，Web profile；已验证 `0.2.2-rc.2`** |
 | Node.js | **`>=24.9.0`** |
 | 探针费用估算 | 已内置，无需额外插件 |
 
-`package.json` 通过 `engines.dsh` 声明宿主版本。本 Alpha 版本不支持其他宿主版本、Desktop 或 TUI。DSH 尚处于开发预览阶段，更新宿主前请检查兼容性。
+`package.json` 通过 `engines.dsh` 声明宿主版本。最低版本范围包含后续预发布版本。不支持 Desktop 或 TUI。未来宿主若出现破坏性接口变更，仍可能需要更新插件。
 
 ## 安装
 
 将 Release 安装包添加到 Web profile：
 
 ```sh
-dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-alpha3/dsh-task-progress-0.1.1-alpha3.tgz"
+dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-rc1/dsh-task-progress-0.1.1-rc1.tgz"
 ```
 
 也可按 Git tag 安装源码：
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-alpha3"
+dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-rc1"
 ```
 
 在**插件**页面启用 bundle，重新启动宿主并重新加载 Web 页面。安装包已包含运行文件，无需构建、安装脚本或额外运行时依赖。
 
-仓库带有 `dsh-plugin` topic，供社区发现。topic 和 Release 不代表任何社区市场已审核或收录本插件；通过市场安装前请确认其实际条目。
+仓库带有 `dsh-plugin` topic，已收录至社区市场。预发布安装包在市场目录中使用固定链接，单独发布 GitHub Release 不会替换该链接；需要更新原条目。面板内的 RC 更新器独立检查 GitHub。
 
 ## 任务进度
 
@@ -56,6 +56,8 @@ dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-alpha3"
 面板可拖动、可收起。“任务详情”直接展示清单（如有）、探针诊断和可横向滚动的趋势图。鼠标悬停或键盘聚焦小点，可查看对应进度和来源队友。
 
 输出文字时，完整清单完成或验证、交付依据充分，可进入可撤回的 `≈99%`“正在输出答复”。宿主没有明确的最终答复开始信号；再次调用工具或返工时恢复执行进度。只有真实成功结束才显示 `100%`。
+
+本地算法按实际产出量计入有上限的证据，相同内容的重复写入只计一次；宿主未提供内容时不会擅自认定重复。语法检查、实质测试和真实测试结果采用不同证据强度。草稿预览不能单独证明即将交付，新增修改使旧验证失效，通过重新测试后解除待修复扣分，失败历史仍保留。只阅读文件或检查一个片段，不能证明整个开发任务已接近完成。
 
 ## 可选 AI 评估
 

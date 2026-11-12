@@ -114,7 +114,7 @@ check('long cold runs keep bounded statistics without retaining operation text',
   assert.ok(JSON.stringify(evidence).length<24000)
   assert.doesNotMatch(JSON.stringify(evidence),/file-9999/)
   const display=estimateLocalProgress(view(evidence));assert.ok(display.percent>0&&display.percent<1)
-  assert.equal(display.local.method,'evidence-prior-v2')
+  assert.equal(display.local.method,'evidence-prior-v3')
 })
 
 console.log(`Cold start alpha2: ${rows.filter(row=>row.ok).length}/${rows.length} passed`)

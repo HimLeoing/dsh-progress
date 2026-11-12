@@ -8,29 +8,29 @@ Task progress for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-har
 
 | Component | Supported version |
 | --- | --- |
-| DeepSeek Harness | **`0.2.2-rc.1`**, Web profile |
+| DeepSeek Harness | **`>=0.2.2-rc.1`**, Web profile; tested on `0.2.2-rc.2` |
 | Node.js | **`>=24.9.0`** |
 | Probe cost estimates | Built in; no additional plugin required |
 
-The package declares the host version in `engines.dsh`. Other host versions, Desktop, and TUI are not supported by this alpha release. DSH is in developer preview; check compatibility before updating the host.
+The package declares the host version in `engines.dsh`. The minimum range includes later prereleases. Desktop and TUI are not supported. A future breaking host API can still require a plugin update.
 
 ## Install
 
 Install the release archive in the Web profile:
 
 ```sh
-dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-alpha3/dsh-task-progress-0.1.1-alpha3.tgz"
+dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-rc1/dsh-task-progress-0.1.1-rc1.tgz"
 ```
 
 Or install the tagged source:
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-alpha3"
+dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-rc1"
 ```
 
 Enable the bundle in **Plugins**, restart the host, and reload the Web UI. The package ships its runtime files; no build, install script, or additional runtime dependency is required.
 
-Repository topic: `dsh-plugin`. Topic discovery and a release do not by themselves mean a community market has approved or listed the plugin. Check the market entry before using a market installation route.
+Repository topic: `dsh-plugin`. The plugin is listed in the community market. Prerelease archives are pinned in the catalog: a GitHub release alone does not update that install link; the existing entry must also be updated. The panel’s RC updater checks GitHub independently.
 
 ## Progress
 
@@ -47,7 +47,7 @@ The panel follows the turn you are reading. Scroll or use the conversation turn 
 
 The main turn includes the lead's integration, verification, and delivery. A delegated checklist or a group of completed teammates cannot establish that the main request is finished. The main percentage is not an average of teammate percentages.
 
-Local estimates work on a fresh installation. Task-type priors and completed execution evidence are primary; bounded comparable-work history is only a small refinement. A running turn without a checklist starts with a conservative approximate number and does not wait for historical samples. Waiting and repeated background-output polls do not advance overall progress. Mutations, useful checks, and delivery evidence update the estimate; rework can reduce it. Cold-start and unfamiliar tasks can still have substantial estimation error.
+Local estimates work on a fresh installation. Task-type priors and completed execution evidence are primary; bounded comparable-work history is only a small refinement. A running turn without a checklist starts with a conservative approximate number and does not wait for historical samples. Waiting and repeated background-output polls do not advance overall progress. Material size supplies bounded work credit; identical observed writes are counted once. Syntax checks, substantive tests, and observed test totals carry different evidence. A draft preview alone cannot establish delivery. New material invalidates earlier verification, and a successful substantive recheck clears outstanding rework debt without erasing failure history. Reading or checking a small fragment cannot establish that a build is nearly complete. Rework can reduce the estimate. Cold-start and unfamiliar tasks can still have substantial estimation error.
 
 For a complete checklist, weights are frozen for its current scope. Explicit weights or valid AI weights take precedence; otherwise task difficulty is estimated locally. Each item has its own evidence and prior: `overall = sum(weight × item progress)`. For example, `20% + 40% × 60% = 44%`. Pending items contribute zero, and the next item starts with its own evidence. AI observations can refine item fractions when enabled. Pending items contribute nothing; an unfinished item cannot consume its full weight. Rework and scope changes can reduce or invalidate an estimate.
 

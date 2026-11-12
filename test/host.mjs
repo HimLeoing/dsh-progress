@@ -97,7 +97,7 @@ assert.equal(body.ok, true)
 assert.equal(typeof body.server.pid, 'number')
 assert.equal(typeof body.progress.projectBar.percent, 'number', 'percent is always a number')
 assert.equal(body.progress.sessionId, null)
-assert.equal(body.plugin.name,'dsh-task-progress');assert.equal(body.plugin.host,'0.2.2-rc.1');assert.equal(body.version,undefined);assert.equal(typeof body.update.available,'boolean');assert.equal(body.restart,undefined)
+assert.equal(body.plugin.name,'dsh-task-progress');assert.equal(body.plugin.host,'>=0.2.2-rc.1');assert.equal(body.version,undefined);assert.equal(typeof body.update.available,'boolean');assert.equal(body.restart,undefined)
 
 // An explicit session id that has nothing live and nothing saved still answers.
 const unknown = await call(state, { url: '/dsh-task-progress/state?session=session-nope' })

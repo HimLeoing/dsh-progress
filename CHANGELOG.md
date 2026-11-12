@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.1.1-rc1 — 2026-11-12
+
+### What's changed
+
+- Declare Harness `>=0.2.2-rc.1` and validate the Web profile on `0.2.2-rc.2`. Later prereleases pass the minimum-version gate. The in-panel RC installer now validates ranges as well as exact host versions.
+- Improve local estimates without AI or previous history: distinguish narrow work from full projects, use bounded material-size evidence, deduplicate identical observed writes, and preserve separate checklist-item accounting.
+- Separate syntax checks from substantive tests. A preview alone cannot establish delivery, new work invalidates old verification, and successful rechecks clear outstanding rework debt while preserving failure diagnostics.
+- Exclude background sessions created after a parent turn has ended; retain real delegated teammates. Bind unnamed delegation to its active checklist item so the same child is not counted in later items. Measure nested tool material before transcript compaction.
+- Retain numeric local progress, checklist weights, independent teammate progress, mode-switch checkpoints, and the existing remaining-time display. Polling and permanent services do not advance overall progress.
+- Add verified tag releases with a packaged archive and SHA-256 checksum. No additional runtime dependencies or local-estimation model requests.
+
+**Requirements:** Harness `>=0.2.2-rc.1`, Web profile; Node.js `>=24.9.0`. Tested on Harness `0.2.2-rc.2`. Future breaking host APIs may require another plugin update. Percentages and remaining time are estimates; only a successful turn end establishes `100%`.
+
+Install `dsh-task-progress-0.1.1-rc1.tgz` from the assets below. This is a prerelease. The community market pins prerelease archives, so its existing entry must be updated separately from GitHub Releases.
+
+### 更新内容
+
+- 宿主要求改为 Harness `>=0.2.2-rc.1`，并适配验证 `0.2.2-rc.2` 的 Web profile。后续预发布版本可通过最低版本检查；面板内 RC 更新器同步支持版本范围校验。
+- 升级无 AI 本地估算：无需历史记录，区分小范围工作与完整项目，按实际产出量计入有上限的证据，去重已观测到的相同写入，并保留每项任务独立计分。
+- 区分语法检查与实质测试。草稿预览不再直接表示接近交付；新增修改使旧验证失效，通过重新测试后解除待修复扣分，同时保留失败记录。
+- 排除主轮次结束后才创建的后台维护会话，保留真实协作队友；无显式负责人的委派绑定派出时的清单项，避免对子项漏算或跨项重复计入。在转录压缩前提取嵌套工具的产出证据。
+- 保留确定的本地估计百分比、清单权重、独立队友进度、模式切换衔接及剩余时间显示。轮询与常驻服务不会推进总进度。
+- 增加经过测试的 tag 自动发布流程，附安装包与 SHA-256 校验。无新增运行时依赖，本地估算不会请求模型。
+
+**宿主要求：** Harness `>=0.2.2-rc.1`，仅 Web profile；Node.js `>=24.9.0`。已验证 Harness `0.2.2-rc.2`。未来宿主若出现破坏性接口变更，插件仍可能需要适配。百分比与剩余时间均为估计，只有本轮真实成功结束才显示 `100%`。
+
+请安装下方的 `dsh-task-progress-0.1.1-rc1.tgz`。此版本为候选版本。社区市场对预发布安装包使用固定链接，需要更新原条目，发布 GitHub Release 本身不会替换市场安装链接。
+
+
 ## 0.1.1-alpha3 — 2026-11-11
 
 [中文](#中文) | [English](#english)

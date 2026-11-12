@@ -1,6 +1,6 @@
 # Contributing
 
-Use DSH `0.2.2-rc.1` with the Web profile and Node.js `>=24.9.0`. The package has no build step or additional runtime dependencies.
+Use DSH `>=0.2.2-rc.1` (currently tested on `0.2.2-rc.2`) with the Web profile and Node.js `>=24.9.0`. The package has no build step or additional runtime dependencies.
 
 ```sh
 npm test

@@ -19,7 +19,7 @@ import {restartPluginHost} from './lib/plugin-restart.js'
 
 export const name = 'dsh-task-progress'
 export const inject = ['webServer']
-const VERSION='0.1.1-alpha3'
+const VERSION='0.1.1-rc1'
 
 /** Reply with JSON and no caching. */
 function sendJson(res, status, body) {
@@ -160,7 +160,7 @@ export function apply(ctx) {
             plan:{items:focus.items,done:focus.done,total:focus.total},projectBar:{...own.projectBar,elapsedMs:focus.elapsedMs},children:[],
             observer:{...ownObserver,turnUsage:observer.workerUsage?.[focus.id]??ownObserver.turnUsage},settings:ai.settings,display:focus.display}
         }
-        sendJson(res,200,{ok:true,server:{pid:process.pid,startedAt:BOOT_AT},plugin:{name,version:VERSION,host:'0.2.2-rc.1'},update:updater.view(),
+        sendJson(res,200,{ok:true,server:{pid:process.pid,startedAt:BOOT_AT},plugin:{name,version:VERSION,host:'>=0.2.2-rc.1'},update:updater.view(),
           progress:{...publicProgress(view),children,observer,settings:ai.settings,display:taskEta.display(view,localProgress({...view,children},ai.settings),ai.settings)},worker})
       },
     },

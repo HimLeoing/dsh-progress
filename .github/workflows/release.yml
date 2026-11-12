@@ -1,0 +1,35 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify tag and release notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json")); if(process.env.RELEASE_TAG!==`v${p.version}`) throw Error("Tag does not match package version"); if(!fs.existsSync(`.github/release-notes/${process.env.RELEASE_TAG}.md`)) throw Error("Release notes missing")'
+      - run: npm test
+      - name: Package and publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          archive="$(npm pack --silent)"
+          sha256sum "$archive" > SHA256SUMS
+          flags=(--latest)
+          if [[ "$RELEASE_TAG" == *-* ]]; then flags=(--prerelease --latest=false); fi
+          gh release create "$RELEASE_TAG" "$archive" SHA256SUMS --verify-tag --title "$RELEASE_TAG" --notes-file ".github/release-notes/$RELEASE_TAG.md" "${flags[@]}"

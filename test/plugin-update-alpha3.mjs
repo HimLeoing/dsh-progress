@@ -17,10 +17,10 @@ assert.equal(selectRelease([row('0.1.0-rc1'),row('0.1.1-rc1')],'0.1.1'),null,'ne
 assert.equal(selectRelease([row('0.1.1-rc1')],'0.1.1-rc2'),null)
 try {
  const home=join(dir,'home'),entry=join(dir,'host','lib','bin.js'),profile={name:'web',home,dir:join(home,'profiles','web')}
- await mkdir(join(dir,'host','lib'),{recursive:true});await writeFile(join(dir,'host','package.json'),JSON.stringify({name:'@deepseek-ai/dsh',version:'0.2.2-rc.1'}))
+ await mkdir(join(dir,'host','lib'),{recursive:true});await writeFile(join(dir,'host','package.json'),JSON.stringify({name:'@deepseek-ai/dsh',version:'0.2.2-rc.2'}))
  const archive=gzipSync(Buffer.from('fixture tar stream; extraction is mocked'))
  const hash=createHash('sha256').update(archive).digest('hex')
- function fixture({running=false,changedRunning=false,badHash=false,unsafe=false,badManifest=false,dependency=false,installScript=false,installFail=false,bomb=false}={}){
+ function fixture({running=false,changedRunning=false,badHash=false,unsafe=false,badManifest=false,exactOldHost=false,dependency=false,installScript=false,installFail=false,bomb=false}={}){
   const calls=[],requests=[];let countRunning=0,restarts=0
   const bytes=bomb?gzipSync(Buffer.alloc(17*1024*1024)):archive
   const sum=badHash?'0'.repeat(64):createHash('sha256').update(bytes).digest('hex')
@@ -32,7 +32,7 @@ try {
      if(args[0]==='-tvzf')return{stdout:unsafe?'lrwxr-xr-x 0 u g 2 Jan 1 00:00 package/link\n':'-rw-r--r-- 0 u g 32 Jan 1 00:00 package/package.json\n'}
      if(args[0]==='-tzf')return{stdout:unsafe?'package/../../escape\n':'package/package.json\n'}
      const pkgDir=join(args[args.indexOf('-C')+1],'package');await mkdir(pkgDir,{recursive:true})
-     await writeFile(join(pkgDir,'package.json'),JSON.stringify({name:'dsh-task-progress',version:target,engines:{dsh:badManifest?'0.2.1':'0.2.2-rc.1'},...(dependency?{dependencies:{bad:'*'}}:{}),...(installScript?{scripts:{postprepare:'unsafe'}}:{})}));return{stdout:''}
+     await writeFile(join(pkgDir,'package.json'),JSON.stringify({name:'dsh-task-progress',version:target,engines:{dsh:badManifest?'0.2.1':exactOldHost?'0.2.2-rc.1':'>=0.2.2-rc.1'},...(dependency?{dependencies:{bad:'*'}}:{}),...(installScript?{scripts:{postprepare:'unsafe'}}:{})}));return{stdout:''}
     }
     if(installFail)throw new Error('fixture official CLI failure')
     return{stdout:''}
@@ -45,7 +45,7 @@ try {
  assert.deepEqual(cli[0].args,[entry,'plugin','--profile','web','add',join(home,'dsh-task-progress','updates',target,'package')])
  assert.equal(cli[0].options.env.DSH_HOME,home);assert.equal(happy.updater.view().phase,'restarting')
  const stopped=fixture({running:true});await assert.rejects(stopped.updater.apply(),/Finish running/);assert.equal(stopped.requests.length,0);assert.equal(stopped.calls.length,0)
- for(const [options,error] of [[{badHash:true},/checksum does not match/],[{unsafe:true},/unsafe paths/],[{badManifest:true},/incompatible/],[{dependency:true},/runtime dependencies/],[{installScript:true},/incompatible/],[{installFail:true},/official CLI failure/],[{changedRunning:true},/task started/],[{bomb:true},/larger than/]]){
+ for(const [options,error] of [[{badHash:true},/checksum does not match/],[{unsafe:true},/unsafe paths/],[{badManifest:true},/incompatible/],[{exactOldHost:true},/incompatible/],[{dependency:true},/runtime dependencies/],[{installScript:true},/incompatible/],[{installFail:true},/official CLI failure/],[{changedRunning:true},/task started/],[{bomb:true},/larger than/]]){
   const test=fixture(options);await assert.rejects(test.updater.apply(),error);assert.equal(test.restarts,0);assert.equal(test.updater.view().phase,'failed')
   if(!options.installFail)assert.equal(test.calls.some(call=>call.command===process.execPath),false)
  }
