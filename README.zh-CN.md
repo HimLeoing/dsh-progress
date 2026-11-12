@@ -30,6 +30,8 @@ dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-rc1"
 
 在**插件**页面启用 bundle，重新启动宿主并重新加载 Web 页面。安装包已包含运行文件，无需构建、安装脚本或额外运行时依赖。
 
+**从 Alpha3 升级：**旧版面板更新器按宿主精确字符串校验，无法接受 RC1 的最低版本范围。请先通过官方安装命令或市场安装一次 RC1；从 RC1 起，面板内更新器已支持版本范围。
+
 仓库带有 `dsh-plugin` topic，已收录至社区市场。预发布安装包在市场目录中使用固定链接，单独发布 GitHub Release 不会替换该链接；需要更新原条目。面板内的 RC 更新器独立检查 GitHub。
 
 ## 任务进度

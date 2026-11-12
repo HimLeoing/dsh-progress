@@ -30,6 +30,8 @@ dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-rc1"
 
 Enable the bundle in **Plugins**, restart the host, and reload the Web UI. The package ships its runtime files; no build, install script, or additional runtime dependency is required.
 
+**Upgrading from Alpha3:** its older in-panel updater compares exact host strings and cannot accept this release’s minimum-version range. Install the RC1 archive once through the official CLI or market. From RC1 onward, the in-panel updater supports declared ranges.
+
 Repository topic: `dsh-plugin`. The plugin is listed in the community market. Prerelease archives are pinned in the catalog: a GitHub release alone does not update that install link; the existing entry must also be updated. The panel’s RC updater checks GitHub independently.
 
 ## Progress
