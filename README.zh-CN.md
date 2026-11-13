@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/hero-zh.png" width="960" alt="dsh-progress，使用真实运行截图的介绍图"></p>
+<p align="center"><img src="docs/assets/hero-zh.png" width="960" alt="dsh-progress：本地估算与 AI 辅助的主界面和任务详情四宫格"></p>
 
 <p align="center"><a href="#安装">安装</a> · <a href="#两种评估方式">两种评估方式</a> · <a href="#界面结构">界面结构</a> · <a href="README.md">English</a> · <a href="https://github.com/HimLeoing/dsh-progress/releases">发布记录</a></p>
 

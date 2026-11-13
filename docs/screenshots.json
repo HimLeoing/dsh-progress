@@ -10,14 +10,18 @@
     "panel-dark.png": "Second real execution, successful completion, dark appearance",
     "panel-light.png": "Same completed second execution, light appearance",
     "turn-complete.png": "Second execution authoritative successful completion",
-    "hero-en.png": "Typography surrounding the actual native panel-dark.png screenshot, downscaled from 704 to 470 pixels",
-    "hero-zh.png": "Typography surrounding the actual native panel-dark.png screenshot, downscaled from 704 to 470 pixels",
+    "hero-en.png": "Four user-supplied real screenshots, arranged in a two-by-two grid on the right 60%; localized typography on the left 40%. Product pixels are preserved; images are fitted without cropping.",
+    "hero-zh.png": "Four user-supplied real screenshots, arranged in a two-by-two grid on the right 60%; localized typography on the left 40%. Product pixels are preserved; images are fitted without cropping.",
     "ai-assistance.png": "Third real execution, AI enabled, Off probes; approximately 8% during execution",
     "ai-diagnostics.png": "Fourth real execution after completion; 5 probe requests, CNY 0.0042 displayed; actual counters and trend crop",
     "task-details.png": "Fourth real execution: three-item read-only verification, 97 tests passed, AI enabled, developer mode disabled",
     "developer-mode.png": "Fourth real execution with developer mode enabled before execution: five actual probe records; fixed-height log viewport and footer; mode restored disabled after capture",
     "annotated-panel-zh.png": "Chinese callouts with leader lines around panel-dark.png; actual center screenshot downscaled to 600 pixels; larger annotation text",
-    "annotated-panel-en.png": "English callouts with leader lines around panel-dark.png; actual center screenshot downscaled to 600 pixels; larger annotation text"
+    "annotated-panel-en.png": "English callouts with leader lines around panel-dark.png; actual center screenshot downscaled to 600 pixels; larger annotation text",
+    "hero-local-overview.png": "User-supplied capture 1: AI disabled, main panel with two completed teammates",
+    "hero-local-details.png": "User-supplied capture 2: AI disabled, checklist and zero probe usage/cost",
+    "hero-ai-overview.png": "User-supplied capture 3: AI enabled, main panel with three completed teammates",
+    "hero-ai-details.png": "User-supplied capture 4: AI enabled, checklist, usage, cost and progress chart"
   },
-  "note": "Native captures are 2560x1550. Only the panel is cropped. No product UI is redrawn or generated. The architecture SVG is a separate diagram. AI compact screenshot and diagnostics were captured at different stages and are presented separately."
+  "note": "Product captures are actual UI screenshots. The README cover uses the four images explicitly supplied by the user; screenshot pixels are not redrawn. Other captures retain their original provenance above. Diagrams and surrounding typography are separate explanatory artwork."
 }

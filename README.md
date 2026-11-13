@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/hero-en.png" width="960" alt="dsh-progress introduction featuring a real product screenshot"></p>
+<p align="center"><img src="docs/assets/hero-en.png" width="960" alt="dsh-progress: local and AI modes, overview and task details, shown in four real screenshots"></p>
 
 <p align="center"><a href="#install">Install</a> · <a href="#two-assessment-modes">Assessment modes</a> · <a href="#panel-layout">Panel layout</a> · <a href="README.zh-CN.md">中文</a> · <a href="https://github.com/HimLeoing/dsh-progress/releases">Releases</a></p>
 
