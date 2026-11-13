@@ -1,0 +1,17 @@
+{
+  "task": "Offline CSV ledger tool",
+  "aiAssistance": false,
+  "host": "0.2.2-rc.3",
+  "plugin": "0.1.1-rc2",
+  "main": "session-959bdb99-dd9f-44d7-a3bc-ffba771692c0",
+  "images": {
+    "turn-start.png": "Second real execution, early phase; native 2x screenshot crop",
+    "turn-mid.png": "Second real execution, main approximately 9%; two resumed teammates complete",
+    "panel-dark.png": "Second real execution, successful completion, dark appearance",
+    "panel-light.png": "Same completed second execution, light appearance",
+    "turn-complete.png": "Second execution authoritative successful completion",
+    "hero-en.png": "Typography surrounding the actual native panel-dark.png screenshot, downscaled from 704 to 470 pixels",
+    "hero-zh.png": "Typography surrounding the actual native panel-dark.png screenshot, downscaled from 704 to 470 pixels"
+  },
+  "note": "Native captures are 2560x1550. Only the panel is cropped. No product UI is redrawn or generated. The architecture SVG is a separate diagram."
+}

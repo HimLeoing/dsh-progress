@@ -13,7 +13,7 @@ await import('../client.js')
 const module=definition.factory(()=>react)
 const ctx={get(key){if(key==='locale')return{getLocale:()=>({id:'zh-CN'})}},effect(fn){disposers.push(fn());return()=>{}},slots:{inject(slot,fn){fn();return()=>{}},register(options,component){registrations.push({options,component});return()=>{}}}}
 module.apply(ctx)
-const wrapper=registrations.find(row=>row.options.id==='dsh-task-progress-progress').component({})
+const wrapper=registrations.find(row=>row.options.id==='dsh-progress-progress').component({})
 const now=Date.now()
 let progress={sessionId:'panel',turn:1,running:true,turnStatus:'running',startedAt:now-120000,projectBar:{mode:'todos',elapsedMs:120000,done:1,total:3},display:{percent:.45,remainingMs:90000,known:true,source:'model',state:'running',phase:'implement',ageMs:2000,updatedAt:now-2000,calibrationSamples:1},plan:{done:1,total:3,items:[{content:'Build the scene',status:'completed'},{content:'Validate the result',status:'in_progress'},{content:'Deliver',status:'pending'}]},commands:[],children:[],lastTool:{name:'read',label:'README.md',ms:21,status:'completed'}}
 let worker=null,selectedWorker=null
@@ -32,6 +32,8 @@ try{
  assert.doesNotMatch(text(tree),/模型预测|前更新|历史校准样本/,'diagnostics must not clutter the default card')
  const details=button(tree,'任务详情');assert.ok(details,'task details have a dedicated button');details.props.onClick();tree=render()
  assert.match(text(tree),/Validate the result/)
+ assert.equal(nodes(tree).some(n=>n?.type==='select'&&n.props['aria-label']==='评估节奏'),false,'advanced controls hidden outside developer mode');
+ progress.settings={aiEnabled:false,aiScope:'all',cadence:'balanced',...progress.settings,developerMode:true};tree=render();
  const cadence=nodes(tree).find(n=>n?.type==='select'&&n.props['aria-label']==='评估节奏');assert.equal(cadence.props.value,'balanced');assert.match(text(cadence),/智能均衡.*隔步省费.*逐步精细/,'mode choices stay inside one-click details')
  assert.equal(button(tree,'预测诊断'),undefined,'no redundant diagnostic disclosure button')
  assert.equal(nodes(tree).filter(n=>n?.props?.className==='dtp-metric').length,4);assert.match(text(tree),/本轮费用 ≈/);assert.doesNotMatch(text(tree),/AI开启|实际完成|\bOff\b|剩余约|历史校准样本/,'the removed diagnostic strip stays hidden')
@@ -45,7 +47,7 @@ try{
  const workers=nodes(tree).filter(n=>n?.props?.className==='dtp-worker');assert.equal(workers.length,3,'three workers share a responsive card grid')
  button(tree,'任务详情').props.onClick();tree=render();assert.doesNotMatch(text(tree),/Build the scene/,'team checklist stays hidden until task details opens');assert.equal(nodes(tree).filter(n=>n?.props?.className==='dtp-worker').length,3,'compact worker cards stay visible');button(tree,'任务详情').props.onClick();tree=render();assert.match(text(tree),/Build the scene/,'task details reveals the full team checklist')
  assert.equal(nodes(tree).find(n=>n?.props?.role==='switch').props['aria-checked'],false,'AI is visibly off by default')
- progress={...progress,plan:{items:[],done:0,total:0},settings:{aiEnabled:true,aiScope:'all'},display:{...progress.display,detailPhase:'previewing'}}
+ progress={...progress,plan:{items:[],done:0,total:0},settings:{aiEnabled:true,aiScope:'all',developerMode:true},display:{...progress.display,detailPhase:'previewing'}}
  tree=render();assert.match(text(tree),/检查效果/);assert.doesNotMatch(text(tree),/本轮没有任务清单/);assert.equal(text(nodes(tree).find(n=>n?.props?.role==='switch')),'AI辅助');assert.equal(nodes(tree).find(n=>n?.props?.role==='switch').props['aria-checked'],true)
  progress={...progress,running:false,turnStatus:'completed',observer:{history:[{at:now-120000,step:4,percent:.9,kind:'probe',ownerLabel:'Builder'}],turnUsage:{requests:1}}};tree=render();assert.doesNotMatch(text(tree),/秒前|分.*前/,'relative observation ages are hidden after completion');assert.match(text(tree),/Builder · 第4步/,'worker observations retain their source')
  progress={...progress,observer:{...progress.observer,history:[{at:now,step:5,percent:1,kind:'probe'}]}};tree=render();assert.match(text(tree),/清单已完/);assert.doesNotMatch(text(tree),/≈100%/,'a finished checklist observation is not shown as predicted task completion')

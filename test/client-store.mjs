@@ -10,12 +10,12 @@ const react={createElement:(type,props)=>({type,props}),useState(){},useEffect(f
 await import('../client.js')
 const module=definition.factory(name=>{assert.equal(name,'react');return react})
 module.apply({get(){},effect(fn){const dispose=fn();disposers.push(dispose);return()=>{}},slots:{inject(slot,fn){fn();return()=>{}},register(options,component){registrations.push({options,component});return()=>{}}}})
-const panel=registrations.find(row=>row.options.id==='dsh-task-progress-progress')
+const panel=registrations.find(row=>row.options.id==='dsh-progress-progress')
 const store=panel.component({}).props.store
 const settle=()=>new Promise(resolve=>setTimeout(resolve,0))
 const reply=(request,id,percent)=>request.resolve({ok:true,json:async()=>({progress:{sessionId:id,display:{percent},running:true}})})
 try{
- const probe=registrations.find(row=>row.options.id==='dsh-task-progress-session').component({sessionId:'A'});probe.type(probe.props)
+ const probe=registrations.find(row=>row.options.id==='dsh-progress-session').component({sessionId:'A'});probe.type(probe.props)
  const cleanupA=reactEffects.at(-1)
  reply(requests[0],'old',1);await settle()
  assert.ok(store.getSnapshot().data === null || store.getSnapshot().data.progress.sessionId === 'A','the previous context never appears while loading')
@@ -32,7 +32,7 @@ try{
  assert.equal(store.getSnapshot().status,'stale')
  assert.equal(store.getSnapshot().data.progress.display.percent,.25)
  assert.equal(store.getSnapshot().receivedAt,received,'a failed poll never resets the clock origin')
- const mount=id=>{const p=registrations.find(row=>row.options.id==='dsh-task-progress-session').component({sessionId:id});p.type(p.props);return reactEffects.at(-1)}
+ const mount=id=>{const p=registrations.find(row=>row.options.id==='dsh-progress-session').component({sessionId:id});p.type(p.props);return reactEffects.at(-1)}
  const parentCleanup=mount('parent');reply(requests.at(-1),'parent',1);await settle()
  const childCleanup=mount('child');reply(requests.at(-1),'child',1);await settle();assert.equal(store.getSnapshot().data.progress.sessionId,'child')
  childCleanup();assert.match(requests.at(-1).url,/session=parent/,'closing a child transcript restores its still-mounted parent context');reply(requests.at(-1),'parent',1);await settle();assert.equal(store.getSnapshot().data.progress.display.percent,1)

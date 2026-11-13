@@ -29,6 +29,9 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           archive="$(npm pack --silent)"
+          release_archive="dsh-progress-${RELEASE_TAG#v}.tgz"
+          if [[ "$archive" != "$release_archive" ]]; then mv "$archive" "$release_archive"; fi
+          archive="$release_archive"
           sha256sum "$archive" > SHA256SUMS
           flags=(--latest)
           if [[ "$RELEASE_TAG" == *-* ]]; then flags=(--prerelease --latest=false); fi

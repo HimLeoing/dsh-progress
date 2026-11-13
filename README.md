@@ -1,14 +1,47 @@
-# dsh-task-progress
+![dsh-progress during a real task](docs/assets/hero-en.png)
 
-English | [中文](README.zh-CN.md)
+<h1 align="center">dsh-progress</h1>
+<p align="center">See the work move forward.</p>
+<p align="center">Local estimates · Teammate progress · Optional AI</p>
+<p align="center"><a href="#install">Install</a> · <a href="README.zh-CN.md">中文</a> · <a href="https://github.com/HimLeoing/dsh-progress/releases">Releases</a></p>
 
-Task progress for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web. A community plugin that shows the current turn, tool activity, and independent teammate progress, with optional AI observations.
+![Task progress during a real run](docs/assets/panel-dark.png)
+
+A task progress panel for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web. See approximate percentages, current operations, and estimated remaining time, even with AI assistance off.
+
+| From request to delivery | From lead to teammates | From overview to detail |
+| --- | --- | --- |
+| Estimates informed by steps, checklists, and verification. | Main task progress stays visible; each teammate has independent state. | Drag or collapse the panel, and open details when needed. |
+
+## In use
+
+These are screenshots from real task execution.
+
+| Start | In progress | Complete |
+| --- | --- | --- |
+| ![Start](docs/assets/turn-start.png) | ![In progress](docs/assets/turn-mid.png) | ![Complete](docs/assets/turn-complete.png) |
+
+| Dark | Light |
+| --- | --- |
+| ![Dark appearance](docs/assets/panel-dark.png) | ![Light appearance](docs/assets/panel-light.png) |
+
+## How it works
+
+![Progress data flow, an architecture diagram rather than a product screenshot](docs/assets/how-it-works.svg)
+
+## Project activity
+
+| Release archive downloads | Star observations |
+| --- | --- |
+| ![Release downloads](docs/assets/downloads.svg) | ![Star observations](docs/assets/stars.svg) |
+
+Snapshot: 2026-11-13. npm publication is pending, so the left chart counts GitHub .tgz downloads. Star history has not been sampled yet; no historical curve is invented.
 
 ## Requirements
 
 | Component | Supported version |
 | --- | --- |
-| DeepSeek Harness | **`>=0.2.2-rc.1`**, Web profile; tested on `0.2.2-rc.2` |
+| DeepSeek Harness | **`>=0.2.2-rc.1`**, Web profile; tested on `0.2.2-rc.3` |
 | Node.js | **`>=24.9.0`** |
 | Probe cost estimates | Built in; no additional plugin required |
 
@@ -19,18 +52,18 @@ The package declares the host version in `engines.dsh`. The minimum range includ
 Install the release archive in the Web profile:
 
 ```sh
-dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-rc1/dsh-task-progress-0.1.1-rc1.tgz"
+dsh plugin --profile web add "https://github.com/HimLeoing/dsh-progress/releases/download/v0.1.1-rc2/dsh-progress-0.1.1-rc2.tgz"
 ```
 
 Or install the tagged source:
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-rc1"
+dsh plugin --profile web add "github:HimLeoing/dsh-progress#v0.1.1-rc2"
 ```
 
 Enable the bundle in **Plugins**, restart the host, and reload the Web UI. The package ships its runtime files; no build, install script, or additional runtime dependency is required.
 
-**Upgrading from Alpha3:** its older in-panel updater compares exact host strings and cannot accept this release’s minimum-version range. Install the RC1 archive once through the official CLI or market. From RC1 onward, the in-panel updater supports declared ranges.
+**Upgrading from Alpha3:** its older in-panel updater compares exact host strings and cannot accept this release’s minimum-version range. Install the current release once through the official CLI or market. Current releases support declared ranges.
 
 Repository topic: `dsh-plugin`. The plugin is listed in the community market. Prerelease archives are pinned in the catalog: a GitHub release alone does not update that install link; the existing entry must also be updated. The panel’s RC updater checks GitHub independently.
 
@@ -103,11 +136,11 @@ The observer uses the native job registry's non-consuming output offsets. It doe
 
 The **Probe cost ≈** tile sums progress-observation requests from the main turn and its teammates. It excludes the models' work on the project itself. A teammate detail shows that teammate's probe cost.
 
-The plugin includes the pure pricing subset of `dsh-cost-meter` under MIT; installing that plugin is not required. It handles separate cache buckets, historical prices, peak schedules, and exchange rates without balance or quota requests. The bundled DeepSeek CNY price snapshot was checked on **2026-11-11** against the [official pricing page](https://api-docs.deepseek.com/quick_start/pricing/). Other providers use the bundled catalog; USD-to-CNY estimates use a configurable reference rate (default 7.2), not a live FX quote. Unknown gateways or models stay unpriced.
+Probe pricing is built in; no additional plugin is required. It handles separate cache buckets, historical prices, peak schedules, and exchange rates without balance or quota requests. The bundled DeepSeek CNY price snapshot was checked on **2026-11-11** against the [official pricing page](https://api-docs.deepseek.com/quick_start/pricing/). Other providers use the bundled catalog; USD-to-CNY estimates use a configurable reference rate (default 7.2), not a live FX quote. Unknown gateways or models stay unpriced.
 
 Optional `pricing.json` in the plugin data directory overrides the price configuration; otherwise an existing cost-meter ledger can supply read-only prices and history. With neither file present, bundled prices are used. See [third-party notices](THIRD_PARTY_NOTICES.md). A `+` means some requests lack usage or pricing: the displayed amount is a known subtotal. `—` means no usable estimate is available. A failed or discarded request can still be billed. Previously unpriced requests with complete usage can be recovered from retained logs; already priced amounts remain frozen, and incomplete history does not erase known costs.
 
-Local state is stored below `$DSH_HOME/dsh-task-progress/`, or `~/.dsh/dsh-task-progress/` by default:
+Local state is stored below `$DSH_HOME/dsh-progress/`, or `~/.dsh/dsh-progress/` by default:
 
 - `preferences.json`: AI settings, observation mode, and the developer-mode switch.
 - `progress.json`: bounded turn snapshots and checklist summaries.
@@ -120,7 +153,7 @@ On first use, eligible legacy progress data can be copied into the new directory
 
 ## Plugin updates
 
-Task details show the loaded version at the bottom right. A header update button appears for a newer RC release: click once to confirm, then click the check mark to install. The updater verifies the published SHA-256 checksum, validates the host requirement, uses the official profile installer, and restarts the same Web host. Updates wait for running tasks to finish. The RC channel does not automatically install alpha releases.
+Task details show the loaded version at the bottom right. The updater verifies the published SHA-256 checksum, validates the host requirement, uses the official profile installer, and restarts the same Web host. Updates wait for running tasks to finish. Normal mode checks newer RC releases; developer mode also checks newer Alpha releases. The circular footer button appears only when an eligible release exists. Confirming installation warns that DSH will restart.
 
 ## Development
 
@@ -133,4 +166,4 @@ npm pack --dry-run
 
 Tests use controlled clocks, providers, and host services. They check behavior and billing consistency; they do not prove that an LLM percentage matches true work remaining. Do not use real credentials, paid model requests, or personal project logs in tests.
 
-See [CONTRIBUTING.md](https://github.com/HimLeoing/dsh-task-progress/blob/main/CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), and the [MIT license](LICENSE).
+See [CONTRIBUTING.md](https://github.com/HimLeoing/dsh-progress/blob/main/CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), and the [MIT license](LICENSE).

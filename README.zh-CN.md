@@ -1,14 +1,47 @@
-# dsh-task-progress
+![dsh-progress：真实运行界面](docs/assets/hero-zh.png)
 
-[English](README.md) | 中文
+<h1 align="center">dsh-progress</h1>
+<p align="center">看见任务，正在向前。</p>
+<p align="center">本地估算 · 队友进度 · 可选 AI 辅助</p>
+<p align="center"><a href="#安装">安装</a> · <a href="README.md">English</a> · <a href="https://github.com/HimLeoing/dsh-progress/releases">发布记录</a></p>
 
-面向 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web 的任务进度社区插件，显示当前轮次、工具活动和独立的队友进度，并提供可选 AI 评估。
+![任务进度实际运行界面](docs/assets/panel-dark.png)
+
+为 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 网页版提供一个清晰的任务进度面板。不打开 AI 辅助，也能看到本地估算百分比、正在执行的操作和剩余时间。
+
+| 从任务到交付 | 从主代理到队友 | 从概览到细节 |
+| --- | --- | --- |
+| 观察步骤、清单与验证结果，显示估算进度。 | 主任务持续显示，每个队友有独立进度。 | 面板可以拖动、折叠，详情按需展开。 |
+
+## 实际运行
+
+以下均为真实任务运行截图。
+
+| 开始 | 进行中 | 完成 |
+| --- | --- | --- |
+| ![开始](docs/assets/turn-start.png) | ![进行中](docs/assets/turn-mid.png) | ![完成](docs/assets/turn-complete.png) |
+
+| 深色 | 浅色 |
+| --- | --- |
+| ![深色界面](docs/assets/panel-dark.png) | ![浅色界面](docs/assets/panel-light.png) |
+
+## 如何工作
+
+![进度数据结构图，并非产品截图](docs/assets/how-it-works.svg)
+
+## 项目统计
+
+| GitHub 安装包下载量（按版本） | Star 记录 |
+| --- | --- |
+| ![安装包下载量](docs/assets/downloads.svg) | ![Star 记录](docs/assets/stars.svg) |
+
+统计快照：2026-11-13。npm 尚未发布，因此左图统计 GitHub 的 .tgz 下载量；Star 尚无历史采样，不补造曲线。
 
 ## 宿主要求
 
 | 组件 | 支持版本 |
 | --- | --- |
-| DeepSeek Harness | **`>=0.2.2-rc.1`，Web profile；已验证 `0.2.2-rc.2`** |
+| DeepSeek Harness | **`>=0.2.2-rc.1`，Web profile；已验证 `0.2.2-rc.3`** |
 | Node.js | **`>=24.9.0`** |
 | 探针费用估算 | 已内置，无需额外插件 |
 
@@ -19,18 +52,18 @@
 将 Release 安装包添加到 Web profile：
 
 ```sh
-dsh plugin --profile web add "https://github.com/HimLeoing/dsh-task-progress/releases/download/v0.1.1-rc1/dsh-task-progress-0.1.1-rc1.tgz"
+dsh plugin --profile web add "https://github.com/HimLeoing/dsh-progress/releases/download/v0.1.1-rc2/dsh-progress-0.1.1-rc2.tgz"
 ```
 
 也可按 Git tag 安装源码：
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-task-progress#v0.1.1-rc1"
+dsh plugin --profile web add "github:HimLeoing/dsh-progress#v0.1.1-rc2"
 ```
 
 在**插件**页面启用 bundle，重新启动宿主并重新加载 Web 页面。安装包已包含运行文件，无需构建、安装脚本或额外运行时依赖。
 
-**从 Alpha3 升级：**旧版面板更新器按宿主精确字符串校验，无法接受 RC1 的最低版本范围。请先通过官方安装命令或市场安装一次 RC1；从 RC1 起，面板内更新器已支持版本范围。
+**从 Alpha3 升级：**旧版面板更新器按宿主精确字符串校验，无法接受 RC1 的最低版本范围。请先通过官方安装命令或市场安装一次当前版本；新版面板更新器已支持版本范围。
 
 仓库带有 `dsh-plugin` topic，已收录至社区市场。预发布安装包在市场目录中使用固定链接，单独发布 GitHub Release 不会替换该链接；需要更新原条目。面板内的 RC 更新器独立检查 GitHub。
 
@@ -107,11 +140,11 @@ AI 保持开启时，同一范围内的普通执行变化可暂时保留上次�
 
 “本轮费用 ≈”合计本轮主任务及所有队友的**进度评估请求**，不包含它们执行项目本身的模型费用。队友详情显示该队友的探针费用。
 
-已按 MIT 协议内置 `dsh-cost-meter` 的纯计价部分，无需安装该插件。支持互斥缓存桶、历史价格、峰谷时段与汇率，不查询余额或额度。内置 DeepSeek 人民币价格于 **2026-11-11** 对照[官方价格页](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)核对；其他提供方使用内置目录，美元换算人民币默认参考汇率 7.2，可配置覆盖，并非实时汇率。未知网关或模型不擅自套价。
+探针计价已内置，无需安装额外插件。支持互斥缓存桶、历史价格、峰谷时段与汇率，不查询余额或额度。内置 DeepSeek 人民币价格于 **2026-11-11** 对照[官方价格页](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)核对；其他提供方使用内置目录，美元换算人民币默认参考汇率 7.2，可配置覆盖，并非实时汇率。未知网关或模型不擅自套价。
 
 可用插件数据目录下的 `pricing.json` 覆盖价格配置；没有该文件时，可只读采用已有 cost-meter 账本的价格与历史。两个文件都不存在时，直接使用内置价格。参见[第三方许可](THIRD_PARTY_NOTICES.md)。金额后的 `+` 表示部分调用缺少用量或价格，显示的是已知小计；`—` 表示没有可用估算。失败或未采用的响应也可能已经产生费用。保留的日志若有完整用量，可补算以前未计价的请求；已计价金额保持冻结，历史不完整时也不会清空已知费用。
 
-数据保存于 `$DSH_HOME/dsh-task-progress/`，默认是 `~/.dsh/dsh-task-progress/`：
+数据保存于 `$DSH_HOME/dsh-progress/`，默认是 `~/.dsh/dsh-progress/`：
 
 - `preferences.json`：AI 开关、范围、节奏与开发者模式。
 - `progress.json`：有界的轮次状态与清单摘要。
@@ -124,7 +157,7 @@ AI 保持开启时，同一范围内的普通执行变化可暂时保留上次�
 
 ## 插件更新
 
-任务详情右下角显示实际加载版本。发布了更新的 RC 后，标题栏会出现更新按钮：点击一次进入确认，再点对勾安装。更新器核验发布的 SHA-256、检查宿主要求，通过官方配置安装器更新，并重启原 Web 宿主。有任务运行时暂不更新。RC 通道不会自动安装 Alpha 版本。
+任务详情右下角显示实际加载版本。更新器核验发布的 SHA-256、检查宿主要求，通过官方配置安装器更新，并重启原 Web 宿主。有任务运行时暂不更新。普通模式检查更新的 RC；开启开发者模式后也检查更新的 Alpha。符合条件的新版本出现时，版本号左侧才显示圆形更新按钮，确认安装时会提示重启 DSH。
 
 ## 开发与反馈
 
@@ -137,4 +170,4 @@ npm pack --dry-run
 
 测试使用受控时钟、提供方与宿主服务，验证行为和计费一致性，不能证明 LLM 百分比等于真实剩余工作量。不要将真实凭据、付费请求或个人项目日志加入测试。
 
-参见 [贡献说明](https://github.com/HimLeoing/dsh-task-progress/blob/main/CONTRIBUTING.md)、[更新记录](CHANGELOG.md) 和 [MIT 许可证](LICENSE)。
+参见 [贡献说明](https://github.com/HimLeoing/dsh-progress/blob/main/CONTRIBUTING.md)、[更新记录](CHANGELOG.md) 和 [MIT 许可证](LICENSE)。

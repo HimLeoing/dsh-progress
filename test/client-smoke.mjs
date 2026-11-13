@@ -7,23 +7,38 @@
  * three slot registrations land with the ids the Host expects.
  */
 import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+
+const manifest=JSON.parse(readFileSync(new URL('../package.json',import.meta.url)))
+assert.equal(manifest.name,'@himleoing/dsh-progress')
+assert.equal(manifest.version,'0.1.1-rc2')
+for(const [locale,detail] of [['en','docs/plugin.en.md'],['zh','docs/plugin.zh-CN.md']])assert.equal(JSON.parse(readFileSync(new URL(`../locale/${locale}.json`,import.meta.url))).meta.detail,detail)
+assert.ok(manifest.files.includes('docs/plugin.*.md'));assert.ok(manifest.files.includes('docs/assets/*.png'))
 
 const loaded = []
+const storage = new Map([
+  ['dsh-task-progress.panel.collapsed.v2', '1'],
+  ['dsh-base.panel.collapsed.v2', '0'],
+  ['dsh-task-progress.panel.position.v2', '{"side":"left","edge":24,"y":42}'],
+  ['dsh-progress.panel.position.v2', '{"side":"right","edge":18,"y":30}'],
+  ['dsh-base.panel.position.v1', '{"x":10,"y":20,"vw":1200,"vh":800}'],
+])
 globalThis.window = {
   __ModuleLoader__: {
     load(definition) {
       loaded.push(definition)
     },
   },
-  localStorage: { getItem: () => null, setItem: () => {} },
+  localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key,value) => storage.set(key,value) },
   addEventListener: () => {},
   removeEventListener: () => {},
 }
+const styles=[]
 globalThis.document = {
   hidden: false,
   querySelector: () => null,
   createElement: () => ({ dataset: {}, textContent: '', remove() {} }),
-  head: { appendChild() {} },
+  head: { appendChild(style) { styles.push(style) } },
   addEventListener: () => {},
   removeEventListener: () => {},
 }
@@ -42,7 +57,7 @@ await import('../client.js')
 
 assert.equal(loaded.length, 1, 'client.js registers exactly one module')
 const definition = loaded[0]
-assert.equal(definition.id, 'dsh-task-progress')
+assert.equal(definition.id, manifest.name, 'client loader registration matches the package imported by the host')
 const clientModule = definition.factory((specifier) => {
   if (specifier === 'react') return react
   throw new Error(`unexpected require(${specifier})`)
@@ -78,6 +93,11 @@ const ctx = {
 }
 
 clientModule.apply(ctx)
+assert.equal(storage.get('dsh-progress.panel.collapsed.v2'),'1','standalone browser preferences take priority over dsh-base')
+assert.equal(storage.get('dsh-progress.panel.position.v2'),'{"side":"right","edge":18,"y":30}','existing new position wins')
+assert.equal(storage.get('dsh-progress.panel.position.v1'),storage.get('dsh-base.panel.position.v1'),'base fallback copies older coordinates')
+assert.equal(storage.get('dsh-task-progress.panel.collapsed.v2'),'1','legacy browser data is retained')
+assert.equal(styles[0].dataset.dshProgress,'dsh-progress','style marker matches renamed duplicate-style selector')
 
 assert.deepEqual(injected.sort(), [
   'conversation.composer.dock',
@@ -85,8 +105,8 @@ assert.deepEqual(injected.sort(), [
 ])
 assert.equal(registrations.length, 2)
 const bySlot = new Map(registrations.map((entry) => [entry.options.name, entry.options]))
-assert.equal(bySlot.get('shell.overlay').id, 'dsh-task-progress-progress')
-assert.equal(bySlot.get('conversation.composer.dock').id, 'dsh-task-progress-session')
+assert.equal(bySlot.get('shell.overlay').id, 'dsh-progress-progress')
+assert.equal(bySlot.get('conversation.composer.dock').id, 'dsh-progress-session')
 for (const entry of registrations) assert.equal(typeof entry.component, 'function')
 
 // Every effect registered its cleanup, and running them stops the poller.

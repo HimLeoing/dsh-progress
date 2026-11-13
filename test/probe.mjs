@@ -13,7 +13,7 @@ const view = {
 }
 
 const payload = buildProbePayload(view, {
-  goal: '把 dsh-task-progress 插件做成能装在任何人的 dsh web 里、任何项目都能用的进度条\n并且估算要准',
+  goal: '把 dsh-progress 插件做成能装在任何人的 dsh web 里、任何项目都能用的进度条\n并且估算要准',
   recentTools: ['bash', 'read', 'edit', 'edit', 'grep', 'bash'],
   lastTool: 'bash',
 })

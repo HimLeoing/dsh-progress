@@ -33,8 +33,8 @@ await check('Progress HTTP must not wait for the npm version registry',async()=>
  const routes=[],clean=[];const {apply}=await import('../index.js')
  const ctx={get:()=>undefined,on:()=>()=>{},effect(fn){const d=fn();clean.push(d);return()=>{}},webServer:{register(r){routes.push(r);return()=>{}}}}
  try{
-  apply(ctx);let done=false;const route=routes.find(r=>r.path==='/dsh-task-progress/state')
-  const pending=route.handler({method:'GET',url:'/dsh-task-progress/state?session=',headers:{host:'127.0.0.1:3080'},socket:{remoteAddress:'127.0.0.1'}},{writeHead(){},end(){done=true}})
+  apply(ctx);let done=false;const route=routes.find(r=>r.path==='/dsh-progress/state')
+  const pending=route.handler({method:'GET',url:'/dsh-progress/state?session=',headers:{host:'127.0.0.1:3080'},socket:{remoteAddress:'127.0.0.1'}},{writeHead(){},end(){done=true}})
   await new Promise(resolve=>setTimeout(resolve,40));const immediate=done
   release?.();await pending
   assert.equal(immediate,true)

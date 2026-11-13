@@ -1,24 +1,24 @@
 /**
- * dsh-task-progress — Client half.
+ * dsh-progress — Client half.
  *
  * Conversation binding and an independent task progress overlay.
  */
 window.__ModuleLoader__.load({
-  id: 'dsh-task-progress',
+  id: '@himleoing/dsh-progress',
   factory(require) {
     const React = require('react')
     const h = React.createElement
     const { useState, useEffect, useCallback, useRef } = React
 
     const API = {
-      state: '/dsh-task-progress/state',
-      preferences:'/dsh-task-progress/preferences',
-      probe:'/dsh-task-progress/probe',
-      debug:'/dsh-task-progress/debug', update:'/dsh-task-progress/update/apply',
+      state: '/dsh-progress/state',
+      preferences:'/dsh-progress/preferences',
+      probe:'/dsh-progress/probe',
+      debug:'/dsh-progress/debug', update:'/dsh-progress/update/apply',
     }
     const POLL_MS = 1200
-    const COLLAPSE_KEY = 'dsh-task-progress.panel.collapsed.v2'
-    const STYLE_ID = 'dsh-task-progress'
+    const COLLAPSE_KEY = 'dsh-progress.panel.collapsed.v2'
+    const STYLE_ID = 'dsh-progress'
 
     /* ------------------------------------------------------------------ */
     /* copy                                                                */
@@ -190,9 +190,9 @@ window.__ModuleLoader__.load({
 
     function injectStyle() {
       if (typeof document === 'undefined') return () => {}
-      if (document.querySelector(`style[data-dsh-task-progress="${STYLE_ID}"]`) !== null) return () => {}
+      if (document.querySelector(`style[data-dsh-progress="${STYLE_ID}"]`) !== null) return () => {}
       const tag = document.createElement('style')
-      tag.dataset.dshTaskProgress = STYLE_ID
+      tag.dataset.dshProgress = STYLE_ID
       tag.textContent = CSS
       document.head.appendChild(tag)
       return () => {
@@ -271,7 +271,7 @@ window.__ModuleLoader__.load({
     /* state store                                                         */
     /* ------------------------------------------------------------------ */
 
-    const CLIENT_VERSION = '0.1.1-rc1'
+    const CLIENT_VERSION = '0.1.1-rc2'
     const monotonicNow=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now()
     const compatClamp=(n,max=.99)=>Math.max(0,Math.min(max,Number.isFinite(n)?n:0))
     const normalized=a=>{if(!a?.length||a.some(n=>!Number.isFinite(n)||n<=0))return null;const sum=a.reduce((x,y)=>x+y,0);return a.map(n=>n/sum)}
@@ -611,7 +611,7 @@ window.__ModuleLoader__.load({
       return top
     }
 
-    const POSITION_KEY='dsh-task-progress.panel.position.v2',LEGACY_POSITION_KEY='dsh-task-progress.panel.position.v1'
+    const POSITION_KEY='dsh-progress.panel.position.v2',LEGACY_POSITION_KEY='dsh-progress.panel.position.v1'
     function useDraggablePanel(defaultTop,collapsed) {
       const overlay=useRef(null),drag=useRef(null)
       const [dragging,setDragging]=useState(false)
@@ -810,12 +810,13 @@ window.__ModuleLoader__.load({
       const historyPoints=(observer.history??[]).filter(point=>Number.isFinite(point.percent)&&point.percent<1).slice(-32)
       if(status==='completed'&&(observer.history??[]).length)historyPoints.push({percent:1,at:p?.endedAt??now,kind:'actual'})
       const update=snapshot.data?.update??{}
-      const applyUpdate=async()=>{if(!updateConfirm){setUpdateConfirm(true);return}setUpdateBusy(true);setAiError('');try{await postJson(API.update,{});await store.refresh()}catch(error){setAiError(error.message)}finally{setUpdateBusy(false);setUpdateConfirm(false)}}
+      const applyUpdate=async()=>{if(typeof window.confirm==='function'){if(!window.confirm(text(`安装 v${update.version} 后将重启 DSH，是否继续？`,`Install v${update.version} and restart DSH?`)))return}else if(!updateConfirm){setUpdateConfirm(true);return}setUpdateBusy(true);setAiError('');try{await postJson(API.update,{});await store.refresh()}catch(error){setAiError(error.message)}finally{setUpdateBusy(false);setUpdateConfirm(false)}}
       const detailsContents = h('div',{id:detailsId.current,className:'dtp-details','data-content':plan.items.length||commands.length>2?'1':'0',role:'region','aria-label':text('任务进度详情','Progress details')},
         checklistContents,
         commands.length>2 ? h('div',null,h('div',{className:'dtp-detailheading'},`${text('并行操作','Parallel operations')} · ${commands.length}`),...commands.slice(2).map(commandRow)) : null,
 
         h('div',{id:`${detailsId.current}-diagnostics`,className:'dtp-diagnostics',role:'region','aria-label':text('预测诊断详情','Forecast diagnostics details')},
+        updateConfirm?h('p',{className:'dtp-explain',role:'status'},text('再次点击确认：安装完成后将重启 DSH。','Click again to confirm: DSH will restart after installation.')):null,
         update.error?h('p',{className:'dtp-explain',role:'status'},update.phase==='failed'?text('插件更新失败，请稍后重试。','Plugin update failed. Try again later.'):text('暂时无法检查插件更新。','Plugin updates are temporarily unavailable.')):null,
         snapshot.data?.compatibility?.mismatch?h('p',{className:'dtp-explain'},text(`客户端 ${CLIENT_VERSION} · 后端 ${snapshot.data.compatibility.serverVersion??'未知'}；重启宿主以加载更新。`,`Client ${CLIENT_VERSION} · backend ${snapshot.data.compatibility.serverVersion??'unknown'}; restart the host to load the update.`)):null,
         display.local?h('div',{className:'dtp-trend-label',title:sourceText},h('span',null,sourceText),h('span',null,`${text('有效操作','Evidence')} ${Math.round(display.local.events)} · ${text('同类样本','Prior samples')} ${display.local.samples}`)):null,
@@ -825,18 +826,19 @@ window.__ModuleLoader__.load({
           [text('输出 tokens','Output tokens'),observer.turnUsage?.outputTokens??0],
           [probeCostLabel,probeCost],
         ].map(([label,value])=>h('div',{className:'dtp-metric',key:label,title:label===probeCostLabel?probeCostTitle:undefined},h('strong',null,typeof value==='number'?value.toLocaleString(en?'en-US':'zh-CN'):value),h('span',null,label)))),
-        historyPoints.length?h('div',{className:'dtp-trend'},h('div',{className:'dtp-trend-label'},h('span',null,text('进度变化','Progress trend')),h('span',null,`${text('缓存读取','Cache read')} ${observer.turnUsage?.cacheReadTokens??0}`)),h(ProgressTrend,{points:historyPoints,text,workers:children}),h('div',{className:'dtp-trend-label'},h('span',null,text('最近观察','Recent observations')),h('span',null,`${Math.round(historyPoints.at(-1).percent*100)}%`))):h('div',{className:'dtp-diag-empty'},(observer.history??[]).length?text('已有评估，当前进度未知','Observations recorded; progress unknown'):text('尚无本轮评估记录','No observations for this request yet')),
-        h('div',{className:'dtp-probe-state'},h('span',{className:'dtp-dot','data-state':observer.state==='updating'?'running':'idle'}),h('span',null,observer.state==='updating'?`${observer.assessingOwner?observer.assessingOwner+' · ':''}${text('正在评估第','Assessing step ')}${observer.assessingStep??'—'}${text('步','')}`:observer.state==='queued'?`${text('待评估','Queued')} ${observer.queuedSteps??0} ${text('步','steps')}`:!running?status==='completed'?text('本轮已完成','Request completed'):status==='interrupted'?text('本轮已停止','Request stopped'):text('等待开始','Ready'):settings.aiEnabled?settings.cadence==='step'?text('逐步精细 · 步骤结束后评估','Detailed · after each step'):settings.cadence==='every-2'?text('隔步省费 · 关键变化优先','Every other step · critical changes first'):text('智能均衡 · 关键变化优先','Balanced · critical changes first'):text('本地模式','Local mode')),h('span',{className:'dtp-latency'},observer.lastLatencyMs?`${(observer.lastLatencyMs/1000).toFixed(1)}s`:'')),
+        historyPoints.length?h('div',{className:'dtp-trend'},h('div',{className:'dtp-trend-label'},h('span',null,text('进度变化','Progress trend')),h('span',null,`${text('缓存读取','Cache read')} ${observer.turnUsage?.cacheReadTokens??0}`)),h(ProgressTrend,{points:historyPoints,text,workers:children}),settings.developerMode?h('div',{className:'dtp-trend-label'},h('span',null,text('最近观察','Recent observations')),h('span',null,`${Math.round(historyPoints.at(-1).percent*100)}%`)):null):h('div',{className:'dtp-diag-empty'},(observer.history??[]).length?text('已有评估，当前进度未知','Observations recorded; progress unknown'):text('尚无本轮评估记录','No observations for this request yet')),
+        settings.developerMode?h(React.Fragment,null,h('div',{className:'dtp-probe-state'},h('span',{className:'dtp-dot','data-state':observer.state==='updating'?'running':'idle'}),h('span',null,observer.state==='updating'?`${observer.assessingOwner?observer.assessingOwner+' · ':''}${text('正在评估第','Assessing step ')}${observer.assessingStep??'—'}${text('步','')}`:observer.state==='queued'?`${text('待评估','Queued')} ${observer.queuedSteps??0} ${text('步','steps')}`:!running?status==='completed'?text('本轮已完成','Request completed'):status==='interrupted'?text('本轮已停止','Request stopped'):text('等待开始','Ready'):settings.aiEnabled?settings.cadence==='step'?text('逐步精细 · 步骤结束后评估','Detailed · after each step'):settings.cadence==='every-2'?text('隔步省费 · 关键变化优先','Every other step · critical changes first'):text('智能均衡 · 关键变化优先','Balanced · critical changes first'):text('本地模式','Local mode')),h('span',{className:'dtp-latency'},observer.lastLatencyMs?`${(observer.lastLatencyMs/1000).toFixed(1)}s`:'')),
         h('div',{className:'dtp-observations','data-running':running?'1':'0'},...(observer.history??[]).slice(-3).reverse().map((point,index)=>h('div',{key:index},h('span',{title:point.ownerLabel??''},`${point.ownerLabel?point.ownerLabel+' · ':point.trigger==='worker-step'?text('队友 · ','Worker · '):''}${point.step?`${text('第','Step ')}${point.step}${text('步','')}`:text('观察节点','Observation')}`),h('span',null,point.kind==='failure'?text('未成功','Failed'):point.kind==='cancelled'?text('已取消','Cancelled'):Number.isFinite(point.percent)?point.percent>=1?text('清单已完','Checklist done'):`≈${Math.round(point.percent*100)}%`:'—'),running?h('span',null,point.at?`${duration(Math.max(0,now-point.at))}${text('前',' ago')}`:''):null))),
         h('label',{className:'dtp-diag-setting'},h('span',null,text('评估节奏','Observation mode')),h('select',{'aria-label':text('评估节奏','Observation mode'),value:settings.cadence??'balanced',disabled:aiBusy,onChange:event=>changeAi({cadence:event.target.value})},h('option',{value:'balanced'},text('智能均衡','Smart balanced')),h('option',{value:'every-2'},text('隔步省费','Every other step')),h('option',{value:'step'},text('逐步精细','Every step')))),
         h('label',{className:'dtp-diag-setting'},h('span',null,text('辅助范围','AI scope')),h('select',{'aria-label':text('AI辅助范围','AI scope'),value:settings.aiScope,disabled:aiBusy,onChange:event=>changeAi({aiScope:event.target.value})},h('option',{value:'all'},text('所有任务','All tasks')),h('option',{value:'no-plan'},text('仅无清单','Without checklist')))),
+        ):null,
         settings.developerMode?h(ProbeDebug,{sessionId:root?.sessionId,turn:root?.turn,worker:focused?.id,text}):null,
         observer.error?h('p',{className:'dtp-explain'},text('本次评估未成功，将在后续步骤重试。','Observation failed; retrying on subsequent steps.')):null,
-        h('div',{className:'dtp-diag-actions'},h('button',{type:'button',disabled:aiBusy||!running||observer.available===false||['updating','queued'].includes(observer.state),onClick:estimateOnce},text('单次估计','Estimate once')),h('button',{type:'button',onClick:()=>store.refresh()},text('刷新状态','Refresh')),h('button',{type:'button',onClick:panelPosition.reset},text('复位面板','Reset position'))),h('div',{className:'dtp-footer'},h('button',{type:'button',role:'switch',className:'dtp-ai-toggle','aria-label':text('开发者模式','Developer mode'),'aria-checked':settings.developerMode===true,disabled:aiBusy||stale||!connected,onClick:()=>changeAi({developerMode:!settings.developerMode})},text('开发者模式','Developer mode')),h('span',{className:'dtp-version'},`v${snapshot.data?.plugin?.version??CLIENT_VERSION}`))))
+        h('div',{className:'dtp-diag-actions'},h('button',{type:'button',disabled:aiBusy||!running||observer.available===false||['updating','queued'].includes(observer.state),onClick:estimateOnce},text('单次估计','Estimate once')),h('button',{type:'button',onClick:()=>store.refresh()},text('刷新状态','Refresh')),h('button',{type:'button',onClick:panelPosition.reset},text('复位面板','Reset position'))),h('div',{className:'dtp-footer'},h('button',{type:'button',role:'switch',className:'dtp-ai-toggle','aria-label':text('开发者模式','Developer mode'),'aria-checked':settings.developerMode===true,disabled:aiBusy||stale||!connected,onClick:()=>changeAi({developerMode:!settings.developerMode})},text('开发者模式','Developer mode')),h('span',{style:{display:'flex',alignItems:'center',gap:7}},update.available?h('button',{type:'button',className:'dtp-collapse dtp-update',style:{borderRadius:'50%',border:'1px solid currentColor',width:22,height:22,padding:0},'aria-label':updateConfirm?text('确认更新插件','Confirm plugin update'):text('更新插件','Update plugin'),title:updateConfirm?text('再次点击安装并重启','Click again to install and restart'):`${text('更新至','Update to')} v${update.version}`,disabled:updateBusy||update.busy||running||stale,onClick:applyUpdate},updateBusy?'…':updateConfirm?'✓':'↻'):null,h('span',{className:'dtp-version'},`v${snapshot.data?.plugin?.version??CLIENT_VERSION}`)))))
 
       return h('div',{ref:panelPosition.overlay,className:'dtp-overlay','data-dragging':panelPosition.dragging?'1':'0',style:panelPosition.style},h('section',{className:'dtp-card','data-state':state,'data-idle':running||updating?'0':'1','data-collapsed':collapsed?'1':'0','aria-label':t.progress,onKeyDown:event=>{if(event.key==='Escape'&&details){setDetails(false);detailsButton.current?.focus();event.stopPropagation()}}},
         h('div',{className:'dtp-head',...panelPosition.header,title:text('拖动移动 · Home 复位','Drag to move · Home to reset')},h(Ring,{value:percent,size:collapsed?15:21,indeterminate:running&&!determinate,muted:state==='interrupted'||state==='disconnected'}),h('span',{className:'dtp-headpct',title:retained?text('保留上次有效估计，正在更新','Last valid estimate; updating'):undefined},percentText),collapsed?null:h('span',{className:'dtp-title'},t.progress),collapsed?null:h('span',{className:'dtp-phase',title:phaseText},phaseText),h('span',{className:'dtp-grow'}),
-          !collapsed&&update.available?h('button',{type:'button',className:'dtp-collapse dtp-update','aria-label':updateConfirm?text('确认更新插件','Confirm plugin update'):text('更新插件','Update plugin'),title:updateConfirm?text('再次点击安装并重启','Click again to install and restart'):`${text('更新至','Update to')} v${update.version}`,disabled:updateBusy||update.busy||running||stale,onClick:applyUpdate},updateBusy?'…':updateConfirm?'✓':'↑'):null,
+
           collapsed||updating?null:h('button',{type:'button',role:'switch',className:'dtp-ai-toggle','aria-label':text('AI辅助','AI assistance'),'aria-checked':settings.aiEnabled,title:`${text('AI辅助','AI assistance')} · ${settings.aiEnabled?text('开启','On'):text('关闭','Off')}`,disabled:aiBusy||stale||!connected,onClick:()=>changeAi({aiEnabled:!settings.aiEnabled})},text('AI辅助','AI assistance')),
           collapsed?null:h('button',{ref:detailsButton,type:'button',className:'dtp-collapse','aria-label':text('任务详情','Task details'),'aria-expanded':details,'aria-controls':detailsId.current,title:text('任务详情','Task details'),onClick:()=>{setDetails(v=>!v)}},infoGlyph),
           h('button',{type:'button',className:'dtp-collapse','aria-label':collapsed?t.collapsed:t.expanded,'aria-expanded':!collapsed,onClick:toggle,title:collapsed?t.collapsed:t.expanded},chevron)),
@@ -928,35 +930,35 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots'],
       apply(ctx) {
-        for(const suffix of ['panel.collapsed.v2','panel.position.v2','panel.position.v1'])try{const key='dsh-task-progress.'+suffix;if(window.localStorage.getItem(key)===null){const old=window.localStorage.getItem('dsh-base.'+suffix);if(old!==null)window.localStorage.setItem(key,old)}}catch{}
+        for(const suffix of ['panel.collapsed.v2','panel.position.v2','panel.position.v1'])try{const key='dsh-progress.'+suffix;if(window.localStorage.getItem(key)===null){for(const prefix of ['dsh-task-progress.','dsh-base.']){const old=window.localStorage.getItem(prefix+suffix);if(old!==null){window.localStorage.setItem(key,old);break}}}}catch{}
         const store = createStore()
 
         ctx.effect(() => {
           store.start()
           return () => store.stop()
-        }, 'dsh-task-progress: poller')
+        }, 'dsh-progress: poller')
 
-        ctx.effect(() => injectStyle(), 'dsh-task-progress: styles')
+        ctx.effect(() => injectStyle(), 'dsh-progress: styles')
 
         const register = (slot, id, order, Component) =>
           ctx.slots.register({ name: slot, id, order }, (props) => {
             try {
               return h(Component, { ...props, ctx, store })
             } catch (error) {
-              console.warn('[dsh-task-progress] render failed', error)
+              console.warn('[dsh-progress] render failed', error)
               return null
             }
           })
 
         ctx.slots.inject('conversation.composer.dock', () => {
-          const dispose = ctx.slots.register({ name: 'conversation.composer.dock', id: 'dsh-task-progress-session', order: 900 }, (props) =>
+          const dispose = ctx.slots.register({ name: 'conversation.composer.dock', id: 'dsh-progress-session', order: 900 }, (props) =>
             h(SessionProbe, { store, sessionId: props?.sessionId }),
           )
           return typeof dispose === 'function' ? dispose : () => {}
         })
 
         ctx.slots.inject('shell.overlay', () => {
-          const dispose = register('shell.overlay', 'dsh-task-progress-progress', 40, ProgressPanel)
+          const dispose = register('shell.overlay', 'dsh-progress-progress', 40, ProgressPanel)
           return typeof dispose === 'function' ? dispose : () => {}
         })
       },

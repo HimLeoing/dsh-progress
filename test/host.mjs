@@ -10,7 +10,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const home = mkdtempSync(join(tmpdir(), 'dsh-task-progress-host-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-progress-host-'))
 process.env.DSH_HOME = home
 
 // The registry read must not hit the network during a test.
@@ -58,7 +58,7 @@ apply(ctx)
 
 assert.deepEqual(
   routes.map((route) => route.path),
-  ['/dsh-task-progress/state','/dsh-task-progress/preferences','/dsh-task-progress/debug','/dsh-task-progress/update/check','/dsh-task-progress/update/apply','/dsh-task-progress/probe'],
+  ['/dsh-progress/state','/dsh-progress/preferences','/dsh-progress/debug','/dsh-progress/update/check','/dsh-progress/update/apply','/dsh-progress/probe'],
 )
 for (const route of routes) assert.equal(route.kind, 'exact')
 
@@ -87,7 +87,7 @@ function call(route, { method = 'GET', url = route.path, origin = 'http://127.0.
   })
 }
 
-const state = routes.find((route) => route.path === '/dsh-task-progress/state')
+const state = routes.find((route) => route.path === '/dsh-progress/state')
 
 assert.equal((await call(state,{host:'attacker.example:3080',origin:'http://attacker.example:3080'})).status,403)
 const noSession = await call(state)
@@ -97,10 +97,10 @@ assert.equal(body.ok, true)
 assert.equal(typeof body.server.pid, 'number')
 assert.equal(typeof body.progress.projectBar.percent, 'number', 'percent is always a number')
 assert.equal(body.progress.sessionId, null)
-assert.equal(body.plugin.name,'dsh-task-progress');assert.equal(body.plugin.host,'>=0.2.2-rc.1');assert.equal(body.version,undefined);assert.equal(typeof body.update.available,'boolean');assert.equal(body.restart,undefined)
+assert.equal(body.plugin.name,'dsh-progress');assert.equal(body.plugin.host,'>=0.2.2-rc.1');assert.equal(body.version,undefined);assert.equal(typeof body.update.available,'boolean');assert.equal(body.restart,undefined)
 
 // An explicit session id that has nothing live and nothing saved still answers.
-const unknown = await call(state, { url: '/dsh-task-progress/state?session=session-nope' })
+const unknown = await call(state, { url: '/dsh-progress/state?session=session-nope' })
 body = JSON.parse(unknown.body)
 assert.equal(body.progress.sessionId, 'session-nope')
 assert.equal(typeof body.progress.projectBar.percent, 'number')
@@ -127,7 +127,7 @@ emit(
   }),
 )
 
-const live = await call(state, { url: '/dsh-task-progress/state?session=session-live' })
+const live = await call(state, { url: '/dsh-progress/state?session=session-live' })
 body = JSON.parse(live.body)
 assert.equal(body.progress.sessionId, 'session-live')
 assert.equal(body.progress.projectBar.mode, 'todos')
@@ -140,17 +140,17 @@ assert.ok(body.progress.projectBar.percent === 0.5, `half the plan with one item
 
 const child={id:'session-child',seq:0,header:{origin:'subagent',parentSession:'session-live',createdAt:Date.now()},snapshotEvents:()=>[]};sessions.push(child)
 for(const [type,data]of [['subagent/descriptor',{label:'Forest'}],['turn/start',{turn:1}]])emit('session/event',child,{seq:++child.seq,type,data,time:Date.now()})
-const focused=JSON.parse((await call(state,{url:'/dsh-task-progress/state?session=session-live&worker=session-child'})).body)
-assert.equal(focused.progress.sessionId,'session-live');assert.equal(focused.worker.sessionId,'session-child');assert.equal(focused.worker.label,'Forest');assert.equal(focused.worker.children.length,0);assert.equal(focused.worker.probe,undefined,'no private probe inputs in drill-down');assert.equal(JSON.parse((await call(state,{url:'/dsh-task-progress/state?session=session-live&worker=unrelated'})).body).worker,null)
+const focused=JSON.parse((await call(state,{url:'/dsh-progress/state?session=session-live&worker=session-child'})).body)
+assert.equal(focused.progress.sessionId,'session-live');assert.equal(focused.worker.sessionId,'session-child');assert.equal(focused.worker.label,'Forest');assert.equal(focused.worker.children.length,0);assert.equal(focused.worker.probe,undefined,'no private probe inputs in drill-down');assert.equal(JSON.parse((await call(state,{url:'/dsh-progress/state?session=session-live&worker=unrelated'})).body).worker,null)
 
 // Self update is distinct from host update/restart controls.
 assert.ok(routes.every(route=>!route.path.startsWith('/dsh-base/')&&!route.path.endsWith('/restart')))
-const debug=routes.find(row=>row.path==='/dsh-task-progress/debug')
+const debug=routes.find(row=>row.path==='/dsh-progress/debug')
 assert.equal((await call(debug,{url:debug.path+'?session=session-live',origin:'https://evil.example'})).status,403)
 assert.equal((await call(debug,{method:'POST'})).status,405)
 assert.equal((await call(debug)).status,400)
 assert.deepEqual(JSON.parse((await call(debug,{url:debug.path+'?session=session-live'})).body).records,[])
-const update=routes.find(row=>row.path==='/dsh-task-progress/update/apply')
+const update=routes.find(row=>row.path==='/dsh-progress/update/apply')
 assert.equal((await call(update,{method:'POST',origin:'https://evil.example'})).status,403)
 assert.equal((await call(update,{method:'POST'})).status,409)
 // Viewing past turns must leave the live root and observer intact.
@@ -163,7 +163,7 @@ assert.equal(present.progress.turn,2);assert.equal(present.progress.running,true
 const missing=JSON.parse((await call(state,{url:state.path+'?session=session-live&turn=9'})).body)
 assert.equal(missing.progress.unavailable,true)
 
-const preferences=routes.find(row=>row.path==='/dsh-task-progress/preferences')
+const preferences=routes.find(row=>row.path==='/dsh-progress/preferences')
 assert.equal((await call(preferences,{method:'GET'})).status,405)
 assert.equal((await call(preferences,{method:'POST',remote:'10.0.0.9'})).status,403)
 assert.equal((await call(preferences,{method:'POST',origin:'https://evil.example'})).status,403)
@@ -174,7 +174,7 @@ assert.equal((await call(preferences,{method:'POST',payload:'{"developerMode":"y
 assert.equal(JSON.parse((await call(preferences,{method:'POST',payload:'{"developerMode":true}'})).body).settings.developerMode,true)
 const configured=await call(preferences,{method:'POST',payload:'{"aiEnabled":true,"aiScope":"all"}'})
 assert.equal(JSON.parse(configured.body).settings.aiEnabled,true)
-assert.equal((await call(routes.find(row=>row.path==='/dsh-task-progress/probe'),{method:'POST'})).status,400)
+assert.equal((await call(routes.find(row=>row.path==='/dsh-progress/probe'),{method:'POST'})).status,400)
 console.log('host checks passed: state, local default, bounded preferences, same-origin writes, manual probe')
 
 for (const dispose of disposers.reverse()) if (typeof dispose === 'function') dispose()

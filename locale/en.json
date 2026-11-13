@@ -1,6 +1,7 @@
 {
   "meta": {
     "title": "Task progress",
-    "description": "Task progress, teammate activity, and optional AI observations."
+    "description": "Task progress, teammate activity, and optional AI observations.",
+    "detail": "docs/plugin.en.md"
   }
 }

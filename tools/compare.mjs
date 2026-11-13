@@ -4,7 +4,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { evaluateProbes } from '../lib/evaluation.js'
 const args = process.argv.slice(2)
-const file = args.find(arg => !arg.startsWith('--')) ?? join(process.env.DSH_HOME ?? join(homedir(), '.dsh'), 'dsh-task-progress', 'probes.jsonl')
+const file = args.find(arg => !arg.startsWith('--')) ?? join(process.env.DSH_HOME ?? join(homedir(), '.dsh'), 'dsh-progress', 'probes.jsonl')
 const records = []
 let skippedLines = 0
 try {

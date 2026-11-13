@@ -17,9 +17,9 @@ import {createProbeDebugLog} from './lib/probe-debug-log.js'
 import {createPluginUpdater} from './lib/plugin-update.js'
 import {restartPluginHost} from './lib/plugin-restart.js'
 
-export const name = 'dsh-task-progress'
+export const name = 'dsh-progress'
 export const inject = ['webServer']
-const VERSION='0.1.1-rc1'
+const VERSION='0.1.1-rc2'
 
 /** Reply with JSON and no caching. */
 function sendJson(res, status, body) {
@@ -36,7 +36,7 @@ function sendJson(res, status, body) {
 const BOOT_AT = Date.now()
 
 /** Where the estimate comparison is appended. */
-const PROBE_LOG = join(process.env.DSH_HOME ?? join(homedir(), '.dsh'), 'dsh-task-progress', 'probes.jsonl')
+const PROBE_LOG = join(process.env.DSH_HOME ?? join(homedir(), '.dsh'), 'dsh-progress', 'probes.jsonl')
 
 /** Whether the request arrived on the machine's own loopback interface. */
 function isLoopback(req) {
@@ -72,9 +72,9 @@ export function apply(ctx) {
   const store = createProgressStore()
   const learning = createLearningStore()
   const taskEta = createTaskEta()
-  ctx.effect(()=>()=>taskEta.clear(),'dsh-task-progress: ETA anchors')
+  ctx.effect(()=>()=>taskEta.clear(),'dsh-progress: ETA anchors')
   let ai
-  const debugLog=createProbeDebugLog(join(process.env.DSH_HOME??join(homedir(),'.dsh'),'dsh-task-progress','probe-debug.jsonl'),{enabled:()=>ai?.settings.developerMode===true})
+  const debugLog=createProbeDebugLog(join(process.env.DSH_HOME??join(homedir(),'.dsh'),'dsh-progress','probe-debug.jsonl'),{enabled:()=>ai?.settings.developerMode===true})
   const tracker = createTracker(ctx, {
     learning,
     captureTranscript:false,
@@ -100,16 +100,16 @@ export function apply(ctx) {
   const quote=createProbeCost()
   ai=createAiProgress({probe,snapshot:id=>tracker.snapshot(id),setModel:(id,value)=>tracker.setModel(id,value),recordObservation:(id,value)=>tracker.recordObservation(id,value),quote,history:createProbeHistory(PROBE_LOG,{quote}),log:logProbe})
   let updatePort=null,restartTimer=null,updateDisposed=false
-  const updater=createPluginUpdater({version:VERSION,profile:ctx.get?.('profileContext'),isRunning:()=>tracker.snapshot().running||ai.busy,restart:()=>new Promise((resolve,reject)=>{
+  const updater=createPluginUpdater({version:VERSION,developerMode:()=>ai.settings.developerMode===true,profile:ctx.get?.('profileContext'),isRunning:()=>tracker.snapshot().running||ai.busy,restart:()=>new Promise((resolve,reject)=>{
     const restartWhenIdle=()=>{if(updateDisposed)return resolve();if(tracker.snapshot().running||ai.busy){restartTimer=setTimeout(restartWhenIdle,2000);restartTimer.unref?.();return}Promise.resolve().then(()=>restartPluginHost(updatePort)).then(resolve,reject)}
     restartWhenIdle()
   })})
-  ctx.effect(()=>()=>{updateDisposed=true;updater.dispose();clearTimeout(restartTimer);void debugLog.flush()},'dsh-task-progress: updater and diagnostics')
+  ctx.effect(()=>()=>{updateDisposed=true;updater.dispose();clearTimeout(restartTimer);void debugLog.flush()},'dsh-progress: updater and diagnostics')
   ctx.effect(()=>{
     const timer=setInterval(()=>{void ai.tick().catch(error=>logProbe({kind:'failure',error:error.message,at:Date.now()}))},200)
     timer.unref?.()
     return()=>{clearInterval(timer);ai.dispose()}
-  },'dsh-task-progress: optional Off observer')
+  },'dsh-progress: optional Off observer')
 
   // A restart goes through SIGTERM; flush the last percentages first.
   const flushOnExit = () => {
@@ -128,12 +128,12 @@ export function apply(ctx) {
     process.off('SIGINT', flushOnExit)
     store.flush()
     learning.dispose()
-  }, 'dsh-task-progress: progress store')
+  }, 'dsh-progress: progress store')
 
   const routes = [
     {
       kind: 'exact',
-      path: '/dsh-task-progress/state',
+      path: '/dsh-progress/state',
       handler: async (req, res) => {
         if (!isLoopback(req)) {
           sendJson(res, 403, { ok: false, error: 'loopback only' })
@@ -165,7 +165,7 @@ export function apply(ctx) {
       },
     },
     {
-      kind:'exact',path:'/dsh-task-progress/preferences',
+      kind:'exact',path:'/dsh-progress/preferences',
       handler:async(req,res)=>{
         if(!isLoopback(req)||!originMatches(req)||req.headers['sec-fetch-site']==='cross-site')return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
         if(req.method!=='POST')return sendJson(res,405,{ok:false,error:'POST only'})
@@ -174,13 +174,13 @@ export function apply(ctx) {
           for await(const part of req){raw+=part;if(Buffer.byteLength(raw)>1024)return sendJson(res,413,{ok:false,error:'body too large'})}
           const value=JSON.parse(raw)
           if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['aiEnabled','aiScope','cadence','developerMode'].includes(key))||'aiEnabled' in value&&typeof value.aiEnabled!=='boolean'||'developerMode' in value&&typeof value.developerMode!=='boolean'||'aiScope' in value&&!['no-plan','all'].includes(value.aiScope)||'cadence' in value&&!['step','balanced','every-2','adaptive','milestones'].includes(value.cadence))return sendJson(res,400,{ok:false,error:'invalid preferences'})
-          const previous=ai.settings,settings=ai.configure(value);tracker.configureLocalMode(previous,settings)
+          const previous=ai.settings,settings=ai.configure(value);tracker.configureLocalMode(previous,settings);if(previous.developerMode!==settings.developerMode)void updater.check(true)
           sendJson(res,200,{ok:true,settings})
         }catch(error){sendJson(res,error instanceof SyntaxError?400:500,{ok:false,error:error.message})}
       }
     },
     {
-      kind:'exact',path:'/dsh-task-progress/debug',handler:async(req,res)=>{
+      kind:'exact',path:'/dsh-progress/debug',handler:async(req,res)=>{
         if(!isLoopback(req)||!originMatches(req)||req.headers['sec-fetch-site']==='cross-site')return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
         if(req.method!=='GET')return sendJson(res,405,{ok:false,error:'GET only'})
         const url=new URL(req.url??'/',`http://${req.headers.host??'127.0.0.1'}`),sessionId=url.searchParams.get('session'),worker=url.searchParams.get('worker'),turnText=url.searchParams.get('turn')
@@ -192,7 +192,7 @@ export function apply(ctx) {
         sendJson(res,200,{ok:true,enabled:ai.settings.developerMode,...result,records:result.records.map(record=>({...record,actorLabel:record.sessionId===sessionId?'主代理':root.children?.find(child=>child.id===record.sessionId)?.label??record.sessionId}))})
       }
     },
-    ...['check','apply'].map(action=>({kind:'exact',path:'/dsh-task-progress/update/'+action,handler:async(req,res)=>{
+    ...['check','apply'].map(action=>({kind:'exact',path:'/dsh-progress/update/'+action,handler:async(req,res)=>{
       if(!isLoopback(req)||!originMatches(req)||req.headers['sec-fetch-site']==='cross-site')return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
       if(req.method!=='POST')return sendJson(res,405,{ok:false,error:'POST only'})
       if(action==='check')return sendJson(res,200,{ok:true,update:await updater.check(true)})
@@ -202,7 +202,7 @@ export function apply(ctx) {
       sendJson(res,202,{ok:true,update:updater.view()})
     }})),
     {
-      kind:'exact',path:'/dsh-task-progress/probe',
+      kind:'exact',path:'/dsh-progress/probe',
       handler:async(req,res)=>{
         if(!isLoopback(req)||!originMatches(req)||req.headers['sec-fetch-site']==='cross-site')return sendJson(res,403,{ok:false,error:'same-origin loopback only'})
         if(req.method!=='POST')return sendJson(res,405,{ok:false,error:'POST only'})
@@ -225,7 +225,7 @@ export function apply(ctx) {
         }
       }
     }
-  }, 'dsh-task-progress: routes')
+  }, 'dsh-progress: routes')
 
-  ctx.effect(() => () => tracker.dispose(), 'dsh-task-progress: tracker')
+  ctx.effect(() => () => tracker.dispose(), 'dsh-progress: tracker')
 }

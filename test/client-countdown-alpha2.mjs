@@ -8,7 +8,7 @@ const h=(type,props,...children)=>({type,props:props??{},children}),react={creat
 const legacy={sessionId:'fixture',turn:1,running:true,turnStatus:'running',operations:{completed:3,failed:0},steps:3,plan:{items:[],done:0,total:0},projectBar:{elapsedMs:17000},commands:[{active:true,id:'op',name:'web_fetch',label:'source page',percent:.99,indeterminate:true}],display:{percent:0,percentKnown:false,indeterminate:true,source:'activity'},settings:{aiEnabled:false},children:[]}
 globalThis.fetch=async()=>({ok:true,json:async()=>({plugin:{version:'0.1.0-rc1'},progress:legacy})})
 await import('../client.js');const client=definition.factory(()=>react),ctx={get:key=>key==='locale'?{getLocale:()=>({id:'zh-CN'})}:undefined,effect(fn){disposers.push(fn());return()=>{}},slots:{inject(_name,fn){fn();return()=>{}},register(options,component){registrations.push({options,component});return()=>{}}}};client.apply(ctx)
-const panel=registrations.find(r=>r.options.id==='dsh-task-progress-progress').component({}),realStore=panel.props.store
+const panel=registrations.find(r=>r.options.id==='dsh-progress-progress').component({}),realStore=panel.props.store
 const raw=node=>Array.isArray(node)?node.flatMap(raw):!node||typeof node!=='object'?[]:[node,...(node.children??[]).flatMap(raw)],text=node=>node==null?'':Array.isArray(node)?node.map(text).join(' '):typeof node!=='object'?String(node):(node.children??[]).map(text).join(' ')
 const render=snapshot=>{states=[];refs=[];cursor=0;return panel.type({...panel.props,store:{getSnapshot:()=>snapshot,subscribe:()=>()=>{},refresh(){}}})}
 try{

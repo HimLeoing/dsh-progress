@@ -27,7 +27,7 @@ try{
  assert.equal(BUILTIN_PRICING.checkedAt,'2026-11-11')
 
  // A pricing file works on a clean machine and is not executable plugin code.
- const own=path.join(home,'dsh-task-progress');fs.mkdirSync(own,{recursive:true})
+ const own=path.join(home,'dsh-progress');fs.mkdirSync(own,{recursive:true})
  const config={currency:'CNY',priceMatch:'exact',prices:{currency:'USD',default:{unpriced:true},providers:{custom:{models:{m:{input:2,cachedInput:.2,cacheWrite:.5,output:8,billingMode:'flat',longContext:{aboveInputTokens:250000,cacheMiss:4,cacheHit:.4,cacheWrite:1,output:12}}}}}},fxRates:{CNY:8,EUR:.9},peakEnabled:false}
  fs.writeFileSync(path.join(own,'pricing.json'),JSON.stringify(config));now+=30001
  const custom=attempt({inputTokens:100000,cacheReadTokens:180000,cacheWriteTokens:1000,outputTokens:100},'m','custom')

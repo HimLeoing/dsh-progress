@@ -15,7 +15,7 @@ const outFile = process.argv[3] ?? '/tmp/dsh-progress.jsonl'
 // Pin one Session: without it the Host answers for whichever Session is most
 // active, and a busy conversation elsewhere silently steals the sample stream.
 const pinned = process.argv[4] ?? ''
-const base = 'http://127.0.0.1:3080/dsh-task-progress/state'
+const base = 'http://127.0.0.1:3080/dsh-progress/state'
 const endpoint = pinned === '' ? base : `${base}?session=${encodeURIComponent(pinned)}`
 
 let lastFingerprint = ''
