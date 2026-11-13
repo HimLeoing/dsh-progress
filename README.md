@@ -50,16 +50,16 @@ Requires **DeepSeek Harness >=0.2.2-rc.1** (Web profile) and **Node.js >=24.9.0*
 Install from npm:
 
 ```sh
-dsh plugin --profile web add "@himleoing/dsh-progress@0.1.1-rc2"
+dsh plugin --profile web add "@himleoing/dsh-progress@0.1.1-rc3"
 ```
 
 Or install the same version from GitHub:
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-progress#v0.1.1-rc2"
+dsh plugin --profile web add "github:HimLeoing/dsh-progress#v0.1.1-rc3"
 ```
 
-Or download the .tgz archive from the [release](https://github.com/HimLeoing/dsh-progress/releases/tag/v0.1.1-rc2). Enable the bundle, restart Harness, and reload the Web UI. Eligible legacy data is copied when destination files are absent; originals remain intact.
+Or download the .tgz archive from the [release](https://github.com/HimLeoing/dsh-progress/releases/tag/v0.1.1-rc3). Enable the bundle, restart Harness, and reload the Web UI. Eligible legacy data is copied when destination files are absent; originals remain intact.
 
 Normal mode checks newer RC releases. Developer mode also checks newer Alpha releases. A circular update button appears beside the version in task details when an eligible release is available.
 

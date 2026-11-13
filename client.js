@@ -271,7 +271,7 @@ window.__ModuleLoader__.load({
     /* state store                                                         */
     /* ------------------------------------------------------------------ */
 
-    const CLIENT_VERSION = '0.1.1-rc2'
+    const CLIENT_VERSION = '0.1.1-rc3'
     const monotonicNow=()=>typeof performance!=='undefined'&&typeof performance.now==='function'?performance.now():Date.now()
     const compatClamp=(n,max=.99)=>Math.max(0,Math.min(max,Number.isFinite(n)?n:0))
     const normalized=a=>{if(!a?.length||a.some(n=>!Number.isFinite(n)||n<=0))return null;const sum=a.reduce((x,y)=>x+y,0);return a.map(n=>n/sum)}

@@ -1,8 +1,8 @@
 {
   "name": "@himleoing/dsh-progress",
-  "version": "0.1.1-rc2",
+  "version": "0.1.1-rc3",
   "type": "module",
-  "description": "Task progress for DeepSeek Harness. Local execution evidence, teammate progress, and optional AI observations.",
+  "description": "DeepSeek Harness 进度条。代码可以 Vibe，进度必须 Visible。",
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -26,7 +26,9 @@
     "docs/assets/*.svg",
     "docs/plugin.*.md",
     "docs/assets/*.png",
-    "docs/assets/*.jpg"
+    "docs/assets/*.jpg",
+    "docs/guide.*.md",
+    "screenshots.json"
   ],
   "dsh": {
     "bundle": {

@@ -50,16 +50,16 @@
 从 npm 安装：
 
 ```sh
-dsh plugin --profile web add "@himleoing/dsh-progress@0.1.1-rc2"
+dsh plugin --profile web add "@himleoing/dsh-progress@0.1.1-rc3"
 ```
 
 或从 GitHub 安装同一版本：
 
 ```sh
-dsh plugin --profile web add "github:HimLeoing/dsh-progress#v0.1.1-rc2"
+dsh plugin --profile web add "github:HimLeoing/dsh-progress#v0.1.1-rc3"
 ```
 
-也可从 [Release](https://github.com/HimLeoing/dsh-progress/releases/tag/v0.1.1-rc2) 下载 .tgz 安装包。在插件页启用，重启 Harness，再刷新网页。旧版数据会在目标文件不存在时迁移，原文件保留。
+也可从 [Release](https://github.com/HimLeoing/dsh-progress/releases/tag/v0.1.1-rc3) 下载 .tgz 安装包。在插件页启用，重启 Harness，再刷新网页。旧版数据会在目标文件不存在时迁移，原文件保留。
 
 普通模式检查更新的 RC；开发者模式同时检查更新的 Alpha。符合条件的新版本出现时，任务详情底部版本号旁显示圆形更新按钮。
 

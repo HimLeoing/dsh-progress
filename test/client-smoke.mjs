@@ -11,7 +11,7 @@ import {readFileSync} from 'node:fs'
 
 const manifest=JSON.parse(readFileSync(new URL('../package.json',import.meta.url)))
 assert.equal(manifest.name,'@himleoing/dsh-progress')
-assert.equal(manifest.version,'0.1.1-rc2')
+assert.equal(manifest.version,'0.1.1-rc3')
 for(const [locale,detail] of [['en','docs/plugin.en.md'],['zh','docs/plugin.zh-CN.md']])assert.equal(JSON.parse(readFileSync(new URL(`../locale/${locale}.json`,import.meta.url))).meta.detail,detail)
 assert.ok(manifest.files.includes('docs/plugin.*.md'));assert.ok(manifest.files.includes('docs/assets/*.png'))
 

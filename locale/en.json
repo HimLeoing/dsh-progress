@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Task progress",
-    "description": "Task progress, teammate activity, and optional AI observations.",
+    "title": "dsh-progress",
+    "description": "DeepSeek Harness 进度条。代码可以 Vibe，进度必须 Visible。",
     "detail": "docs/plugin.en.md"
   }
 }

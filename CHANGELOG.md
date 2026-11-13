@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.1.1-rc3
+
+### English
+
+#### dsh-progress
+
+Plugin branding and documentation update for DeepSeek Harness Web.
+
+- Show **dsh-progress** in the installed plugin list, with the updated short introduction.
+- Bundle a Chinese plugin details page with the current four-screenshot cover, feature overview, usage requirements, and update instructions.
+- Refresh the English and Chinese README covers: a lowercase product name, a short descriptor, and the new slogans above the feature summary. Keep the four supplied product screenshots in their original order.
+
+**Requirements:** DeepSeek Harness **>=0.2.2-rc.1**, Web profile, and Node.js **>=24.9.0**.
+
+Local estimation requires no additional model requests. AI assistance is off by default and can incur provider charges when enabled.
+
+Install `dsh-progress-0.1.1-rc3.tgz` with the official plugin installer, or install `@himleoing/dsh-progress@0.1.1-rc3` from npm. The attached `SHA256SUMS` verifies the archive.
+
+### 中文
+
+#### dsh-progress
+
+DeepSeek Harness 网页版插件的品牌展示与说明更新。
+
+- 已安装插件列表统一显示 **dsh-progress**，并使用新版简介。
+- 安装包内置中文插件详情页，更新四宫格首图、功能介绍、使用要求与更新说明。
+- 同步调整中英文 README 首图：小写产品名、简短说明、宣传语与功能摘要。四张产品截图保持用户指定的顺序。
+
+**使用要求：** DeepSeek Harness **>=0.2.2-rc.1**、Web profile，以及 Node.js **>=24.9.0**。
+
+本地估算不发送额外模型请求。AI 辅助默认关闭，开启后可能产生提供方费用。
+
+通过官方插件安装器安装 `dsh-progress-0.1.1-rc3.tgz`，或从 npm 安装 `@himleoing/dsh-progress@0.1.1-rc3`。附件 `SHA256SUMS` 提供安装包校验值。
+
 ## 0.1.1-rc2
 
 ### English

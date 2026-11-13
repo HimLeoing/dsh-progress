@@ -19,7 +19,7 @@ import {restartPluginHost} from './lib/plugin-restart.js'
 
 export const name = 'dsh-progress'
 export const inject = ['webServer']
-const VERSION='0.1.1-rc2'
+const VERSION='0.1.1-rc3'
 
 /** Reply with JSON and no caching. */
 function sendJson(res, status, body) {
