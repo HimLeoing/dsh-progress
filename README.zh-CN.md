@@ -45,7 +45,7 @@
 
 ## 安装
 
-需要 **DeepSeek Harness >=0.2.2-rc.1**（Web profile）和 **Node.js >=24.9.0**；已在宿主 0.2.2-rc.3 验证。
+需要 **DeepSeek Harness >=0.2.2-rc.1**（Web 端与 Desktop 端）和 **Node.js >=24.9.0**；已在宿主 0.2.2-rc.3 验证。
 
 从 npm 安装：
 

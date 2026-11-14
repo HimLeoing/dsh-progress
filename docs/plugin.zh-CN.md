@@ -25,7 +25,7 @@ AI 辅助默认关闭。开启后，输入、缓存输入与输出仍可能产�
 
 ## 使用要求与更新
 
-- DeepSeek Harness **>=0.2.2-rc.1**，Web profile。
+- DeepSeek Harness **>=0.2.2-rc.1**，支持 Web 端与 Desktop 端。
 - Node.js **>=24.9.0**。
 
 安装后启用插件，重启 Harness 并刷新网页。旧版数据在目标文件不存在时迁移，原文件保留。

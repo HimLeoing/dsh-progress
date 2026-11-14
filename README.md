@@ -45,7 +45,7 @@ Both screenshots come from one real verification run: three checklist items, 97 
 
 ## Install
 
-Requires **DeepSeek Harness >=0.2.2-rc.1** (Web profile) and **Node.js >=24.9.0**. Tested on Harness 0.2.2-rc.3.
+Requires **DeepSeek Harness >=0.2.2-rc.1** (Web and Desktop) and **Node.js >=24.9.0**. Tested on Harness 0.2.2-rc.3.
 
 Install from npm:
 
