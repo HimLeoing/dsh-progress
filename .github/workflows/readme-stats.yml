@@ -31,6 +31,6 @@ jobs:
         run: |
           git add docs/stats.json docs/assets/npm-downloads*.svg docs/assets/stars*.svg
           if git diff --cached --quiet; then exit 0; fi
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: refresh public project statistics'
+          git -c user.name='HimLeoing' -c user.email='83563534+HimLeoing@users.noreply.github.com' commit -m 'docs: refresh public project statistics'
           gh auth setup-git
           git push origin HEAD:main
