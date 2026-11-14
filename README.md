@@ -1,8 +1,17 @@
+<p align="center">
+  <a href="https://awesome-dsh-plugin.com/p/HimLeoing/dsh-progress/"><img src="https://awesome-dsh-plugin.com/badge.svg" alt="Awesome DSH Plugin"></a>
+  <a href="https://www.npmjs.com/package/@himleoing/dsh-progress"><img src="https://img.shields.io/npm/v/%40himleoing%2Fdsh-progress/rc?label=npm&amp;color=C3A251" alt="npm RC version"></a>
+  <a href="https://www.npmjs.com/package/@himleoing/dsh-progress"><img src="https://img.shields.io/npm/dm/%40himleoing%2Fdsh-progress?color=C3A251" alt="npm monthly downloads"></a>
+  <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/Harness-%E2%89%A50.2.2--rc.1-C3A251" alt="Harness ≥0.2.2-rc.1"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/HimLeoing/dsh-progress?color=C3A251" alt="MIT license"></a>
+  <a href="https://github.com/HimLeoing/dsh-progress/stargazers"><img src="https://img.shields.io/github/stars/HimLeoing/dsh-progress?style=flat&amp;color=C3A251" alt="GitHub stars"></a>
+</p>
+
 <p align="center"><img src="docs/assets/hero-en.png" width="960" alt="dsh-progress: local and AI modes, overview and task details, shown in four real screenshots"></p>
 
-<p align="center"><a href="#install">Install</a> · <a href="#two-assessment-modes">Assessment modes</a> · <a href="#panel-layout">Panel layout</a> · <a href="README.zh-CN.md">中文</a> · <a href="https://github.com/HimLeoing/dsh-progress/releases">Releases</a></p>
+<p align="center"><a href="#install">Install</a> · <a href="#two-assessment-modes">Assessment modes</a> · <a href="#panel-layout">Panel layout</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="https://github.com/HimLeoing/dsh-progress/releases">Releases</a></p>
 
-**dsh-progress** adds task progress to [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web. See overall progress, current work, estimated remaining time, and each teammate's progress. Choose local estimation or AI assistance, and open details when needed.
+**dsh-progress** adds task progress to [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web and Desktop. See overall progress, current work, estimated remaining time, and each teammate's progress. Choose local estimation or AI assistance, and open details when needed.
 
 ## Two assessment modes
 

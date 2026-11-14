@@ -1,8 +1,17 @@
+<p align="center">
+  <a href="https://awesome-dsh-plugin.com/p/HimLeoing/dsh-progress/"><img src="https://awesome-dsh-plugin.com/badge.svg" alt="Awesome DSH Plugin"></a>
+  <a href="https://www.npmjs.com/package/@himleoing/dsh-progress"><img src="https://img.shields.io/npm/v/%40himleoing%2Fdsh-progress/rc?label=npm&amp;color=C3A251" alt="npm RC version"></a>
+  <a href="https://www.npmjs.com/package/@himleoing/dsh-progress"><img src="https://img.shields.io/npm/dm/%40himleoing%2Fdsh-progress?color=C3A251" alt="npm monthly downloads"></a>
+  <a href="https://github.com/deepseek-ai/deepseek-harness"><img src="https://img.shields.io/badge/Harness-%E2%89%A50.2.2--rc.1-C3A251" alt="Harness ≥0.2.2-rc.1"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/HimLeoing/dsh-progress?color=C3A251" alt="MIT license"></a>
+  <a href="https://github.com/HimLeoing/dsh-progress/stargazers"><img src="https://img.shields.io/github/stars/HimLeoing/dsh-progress?style=flat&amp;color=C3A251" alt="GitHub stars"></a>
+</p>
+
 <p align="center"><img src="docs/assets/hero-zh.png" width="960" alt="dsh-progress：本地估算与 AI 辅助的主界面和任务详情四宫格"></p>
 
-<p align="center"><a href="#安装">安装</a> · <a href="#两种评估方式">两种评估方式</a> · <a href="#界面结构">界面结构</a> · <a href="README.md">English</a> · <a href="https://github.com/HimLeoing/dsh-progress/releases">发布记录</a></p>
+<p align="center"><a href="#安装">安装</a> · <a href="#两种评估方式">两种评估方式</a> · <a href="#界面结构">界面结构</a> · <a href="README.md">English</a> · <span>简体中文</span> · <a href="https://github.com/HimLeoing/dsh-progress/releases">发布记录</a></p>
 
-**dsh-progress** 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 网页版任务进度插件。查看总体进度、当前工作、剩余时间和每位队友的进展；选择本地估算或 AI 辅助，按需要展开细节。
+**dsh-progress** 是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) Web 端与 Desktop 端任务进度插件。查看总体进度、当前工作、剩余时间和每位队友的进展；选择本地估算或 AI 辅助，按需要展开细节。
 
 ## 两种评估方式
 
