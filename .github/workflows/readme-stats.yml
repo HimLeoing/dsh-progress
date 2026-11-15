@@ -24,7 +24,9 @@ jobs:
       - name: Read public statistics
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/update-readme-stats.mjs
+        run: |
+          node test/readme-stats.mjs
+          node scripts/update-readme-stats.mjs
       - name: Save updated charts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -80,8 +80,8 @@ Task details include checklists, trends, and built-in probe pricing. Developer m
 
 ## Project activity
 
-<table><tr><th width="50%">npm daily downloads</th><th width="50%">Star observations</th></tr><tr><td><img src="docs/assets/npm-downloads.svg" width="420" alt="Daily npm downloads for @himleoing/dsh-progress"></td><td><img src="docs/assets/stars.svg" width="420" alt="Current stars and history sampling status"></td></tr></table>
+<table><tr><th width="50%">npm cumulative downloads</th><th width="50%">Star observations</th></tr><tr><td><img src="docs/assets/npm-downloads.svg" width="420" alt="Cumulative npm downloads for @himleoing/dsh-progress by UTC date"></td><td><img src="docs/assets/stars.svg" width="420" alt="Current stars and history sampling status"></td></tr></table>
 
-Updated daily from public APIs. npm counts only `@himleoing/dsh-progress`; new package data can be delayed. Star history starts with the first observation; earlier values are not reconstructed.
+Refreshed daily from public APIs. The npm chart shows cumulative downloads of all versions of `@himleoing/dsh-progress` since publication: UTC date on the x-axis and total downloads on the y-axis. npm publishes statistics with a delay; the chart labels the data cutoff separately from its refresh date. Star history starts with the first observation; earlier values are not reconstructed.
 
 [MIT license](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
