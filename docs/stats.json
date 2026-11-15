@@ -1,8 +1,8 @@
 {
   "repository": "HimLeoing/dsh-progress",
   "package": "@himleoing/dsh-progress",
-  "updatedAt": "2026-11-15T06:46:54.977Z",
-  "chartsUpdatedAt": "2026-11-15T06:48:39.985Z",
+  "updatedAt": "2026-11-15T14:22:13.819Z",
+  "chartsUpdatedAt": "2026-11-15T14:22:13.819Z",
   "stars": [
     {
       "date": "2026-11-13",
@@ -14,7 +14,7 @@
     },
     {
       "date": "2026-11-15",
-      "count": 2
+      "count": 4
     }
   ],
   "downloads": [
