@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {cumulativeDownloads} from '../scripts/download-series.mjs'
+import {cumulativeDownloads,statisticsChanged} from '../scripts/download-series.mjs'
 
 const days=[{date:'2026-11-13',count:288},{date:'2026-11-14',count:12},{date:'2026-11-15',count:0}]
 assert.deepEqual(cumulativeDownloads(days).map(x=>x.count),[288,300,300])
@@ -11,4 +11,10 @@ assert.throws(()=>cumulativeDownloads([days[1],days[0]]),/unordered/)
 assert.throws(()=>cumulativeDownloads([{date:'2026-02-30',count:1}]),/Invalid/)
 assert.throws(()=>cumulativeDownloads([{date:'2026-11-13',count:-1}]),/Invalid/)
 assert.deepEqual(cumulativeDownloads([]),[])
-console.log('README download statistics passed: cumulative counts, corrections, lifetime retention, UTC gaps and invalid data')
+assert.deepEqual(cumulativeDownloads([{date:'2026-11-12',count:0},{date:'2026-11-13',count:288},{date:'2026-11-14',count:248}]).map(x=>x.count),[0,288,536])
+const snapshot={stars:[{date:'2026-11-15',count:1}],downloads:days,npmAvailable:true,npmDataThrough:'2026-11-15'}
+assert.equal(statisticsChanged(snapshot,{...snapshot,updatedAt:'later',chartsUpdatedAt:'later'}),false)
+assert.equal(statisticsChanged(snapshot,{...snapshot,downloads:[...days,{date:'2026-11-16',count:1}]}),true)
+assert.equal(statisticsChanged(snapshot,{...snapshot,stars:[{date:'2026-11-15',count:2}]}),true)
+assert.equal(statisticsChanged(snapshot,{...snapshot,npmAvailable:false}),true)
+console.log('README download statistics passed: cumulative counts, corrections, lifetime retention, UTC gaps, 536 total and unchanged polls')

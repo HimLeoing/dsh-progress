@@ -1,7 +1,14 @@
 name: README statistics
 on:
   schedule:
-    - cron: '23 2 * * *'
+    - cron: '7,22,37,52 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/readme-stats.yml'
+      - 'scripts/update-readme-stats.mjs'
+      - 'scripts/download-series.mjs'
+      - 'test/readme-stats.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,6 +18,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
     steps:
@@ -31,7 +39,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git add docs/stats.json docs/assets/npm-downloads*.svg docs/assets/stars*.svg
+          git add README.md README.zh-CN.md docs/stats.json docs/assets/npm-downloads*.svg docs/assets/stars*.svg
           if git diff --cached --quiet; then exit 0; fi
           git -c user.name='HimLeoing' -c user.email='83563534+HimLeoing@users.noreply.github.com' commit -m 'docs: refresh public project statistics'
           gh auth setup-git

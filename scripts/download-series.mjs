@@ -11,3 +11,9 @@ export function cumulativeDownloads(rows) {
   return {date,count:total}
  })
 }
+
+/** Polling without changed source data must not create another commit. */
+export function statisticsChanged(previous,next) {
+ const values=x=>({stars:x.stars??[],downloads:x.downloads??[],npmAvailable:x.npmAvailable??false,npmDataThrough:x.npmDataThrough??null})
+ return JSON.stringify(values(previous))!==JSON.stringify(values(next))
+}

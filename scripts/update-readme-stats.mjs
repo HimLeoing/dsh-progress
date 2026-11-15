@@ -1,8 +1,9 @@
 /** Public project statistics only. Missing days stay missing; no synthetic history. */
 import fs from 'node:fs/promises'
 import https from 'node:https'
+import {createHash} from 'node:crypto'
 import {createProxyResolver} from '../lib/github-transport.js'
-import {cumulativeDownloads} from './download-series.mjs'
+import {cumulativeDownloads,statisticsChanged} from './download-series.mjs'
 const repo='HimLeoing/dsh-progress',pkg='@himleoing/dsh-progress'
 // Rebuild download artwork from previously verified daily counts without
 // changing Star observations or claiming a new network observation.
@@ -65,6 +66,10 @@ if(npmDay!==null){
 const totals=cumulativeDownloads(downloads),total=totals.at(-1)?.count??0
 const npmAvailable=renderOnly?previous.npmAvailable:npmDay!==null
 const data={repository:repo,package:pkg,updatedAt:renderOnly?previous.updatedAt:now.toISOString(),chartsUpdatedAt:now.toISOString(),stars,downloads,npmAvailable,npmDataThrough,npmTotalDownloads:total}
+if(!renderOnly&&!statisticsChanged(previous,data)){
+ console.log(JSON.stringify({unchanged:true,npmDataThrough,totalDownloads:total}))
+ process.exit(0)
+}
 const esc=t=>String(t).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;')
 function chart(title,subtitle,rows,empty,source,{zh=false,cumulative=false}={}){
  const width=580,height=270,left=48,right=542,top=88,bottom=190,max=Math.max(1,...rows.map(r=>r.count)),n=rows.length
@@ -80,5 +85,12 @@ await fs.writeFile(file,JSON.stringify(data,null,2)+'\n')
 for(const zh of [false,true]){
  await fs.writeFile(new URL(`../docs/assets/npm-downloads${zh?'-zh':''}.svg`,import.meta.url),chart(zh?'npm 累计下载量':'npm cumulative downloads',pkg,totals.slice(-366),zh?'等待 npm 下载统计同步':'Waiting for npm download statistics','Source: npm Downloads API',{zh,cumulative:true}))
  if(!renderOnly)await fs.writeFile(new URL(`../docs/assets/stars${zh?'-zh':''}.svg`,import.meta.url),chart(zh?'GitHub Star 记录':'GitHub Star observations',zh?'按日采样；不补造此前历史':'Daily samples; no reconstructed past values',stars,'','Source: GitHub API'))
+}
+// A changed image URL prevents GitHub's image cache from hiding new data.
+const revision=rows=>createHash('sha256').update(JSON.stringify(rows)).digest('hex').slice(0,12)
+for(const name of ['README.md','README.zh-CN.md']){
+ const path=new URL(`../${name}`,import.meta.url),source=await fs.readFile(path,'utf8')
+ const updated=source.replace(/src="docs\/assets\/(npm-downloads(?:-zh)?|stars(?:-zh)?)\.svg(?:\?[^\"]*)?"/g,(_,asset)=>`src="docs/assets/${asset}.svg?v=${revision(asset.startsWith('npm-')?downloads:stars)}"`)
+ if(updated!==source)await fs.writeFile(path,updated)
 }
 console.log(JSON.stringify({date,renderOnly,stars:stars.at(-1)?.count,starSamples:stars.length,downloadDays:downloads.length,npmAvailable,npmDataThrough,totalDownloads:total}))
