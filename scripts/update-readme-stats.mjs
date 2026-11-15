@@ -51,9 +51,8 @@ let downloads=previous.downloads??[],npmDataThrough=previous.npmDataThrough??dow
 if(npmDay!==null){
  const first=metadata?.time?.created?.slice(0,10),last=npmDay.end
  if(!/^\d{4}-\d{2}-\d{2}$/.test(first??'')||!/^\d{4}-\d{2}-\d{2}$/.test(last??'')||last>yesterday)throw new Error('Missing or invalid npm history bounds')
- // Include six pre-publication days returned by npm, so a newly published
- // package has a readable zero baseline rather than a single isolated dot.
- const start=Date.parse(`${first}T00:00:00Z`)-6*86400000,end=Date.parse(`${last}T00:00:00Z`),rows=[]
+ // Keep just the day before publication as the zero baseline.
+ const start=Date.parse(`${first}T00:00:00Z`)-86400000,end=Date.parse(`${last}T00:00:00Z`),rows=[]
  for(let from=start;from<=end;from+=365*86400000){
   const to=Math.min(end,from+364*86400000),a=new Date(from).toISOString().slice(0,10),b=new Date(to).toISOString().slice(0,10)
   const range=await readJson(`https://api.npmjs.org/downloads/range/${a}:${b}/${encodeURIComponent(pkg)}`)
