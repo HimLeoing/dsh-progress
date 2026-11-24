@@ -80,7 +80,7 @@ Task details include checklists, trends, and built-in probe pricing. Developer m
 
 ## Project activity
 
-<table><tr><th width="50%">npm cumulative downloads</th><th width="50%">Star observations</th></tr><tr><td><img src="docs/assets/npm-downloads.svg?v=ea35eb6e6da3" width="420" alt="Cumulative npm downloads for @himleoing/dsh-progress by UTC date"></td><td><img src="docs/assets/stars.svg?v=0ed02ef72525" width="420" alt="Current stars and history sampling status"></td></tr></table>
+<table><tr><th width="50%">npm cumulative downloads</th><th width="50%">Star observations</th></tr><tr><td><img src="docs/assets/npm-downloads.svg?v=ea35eb6e6da3" width="420" alt="Cumulative npm downloads for @himleoing/dsh-progress by UTC date"></td><td><img src="docs/assets/stars.svg?v=5a3c70446ec8" width="420" alt="Current stars and history sampling status"></td></tr></table>
 
 Checked every 15 minutes; charts update when public API data changes. GitHub Actions scheduling and image caching can add a delay. The npm chart shows cumulative downloads of all versions of `@himleoing/dsh-progress` since publication: UTC date on the x-axis and total downloads on the y-axis. npm publishes statistics with a delay; the chart labels the data cutoff separately from its refresh date. Star history starts with the first observation; earlier values are not reconstructed.
 
