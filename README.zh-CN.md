@@ -80,7 +80,7 @@ dsh plugin --profile web add "github:HimLeoing/dsh-progress#v0.1.1-rc3"
 
 ## 项目统计
 
-<table><tr><th width="50%">npm 累计下载量</th><th width="50%">Star 记录</th></tr><tr><td><img src="docs/assets/npm-downloads-zh.svg?v=3f09bab20334" width="420" alt="按 UTC 日期展示 @himleoing/dsh-progress 的累计 npm 下载量"></td><td><img src="docs/assets/stars-zh.svg?v=0653c2e38e0d" width="420" alt="当前 Star 数与历史采样状态"></td></tr></table>
+<table><tr><th width="50%">npm 累计下载量</th><th width="50%">Star 记录</th></tr><tr><td><img src="docs/assets/npm-downloads-zh.svg?v=baaa30cf06c6" width="420" alt="按 UTC 日期展示 @himleoing/dsh-progress 的累计 npm 下载量"></td><td><img src="docs/assets/stars-zh.svg?v=0653c2e38e0d" width="420" alt="当前 Star 数与历史采样状态"></td></tr></table>
 
 每 15 分钟检查公开 API，有变化时更新图表；GitHub Actions 排队和图片缓存仍可能带来延迟。npm 图统计 `@himleoing/dsh-progress` 自发布以来所有版本的累计下载量：横轴为 UTC 日期，纵轴为累计下载次数。npm 统计发布存在延迟，因此图中分别标注数据截止日和图表刷新日；Star 从首次采样起记录，不补造过去的曲线。
 
